@@ -1,4 +1,6 @@
 from flask import Flask, Response, render_template
+from flask_socketio import SocketIO
+
 import cv2
 
 from eye_blinking import gen_blink_detect
