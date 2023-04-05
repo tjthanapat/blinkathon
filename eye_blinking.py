@@ -31,6 +31,63 @@ def calculate_eye_aspect_ratio(eye):
     # return the eye aspect ratio
     return ear
 
+detector = dlib.get_frontal_face_detector()
+predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+
+def detect_blink(frame, previous_counter:int):
+    frame = imutils.resize(frame, width=450)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # detect faces in the grayscale frame
+    rects = detector(gray, 0)
+
+    # loop over the face detections
+    for rect in rects:
+        
+        # determine the facial landmarks for the face region, then
+        # convert the facial landmark (x, y)-coordinates to a NumPy
+        # array
+        shape = predictor(gray, rect)
+        shape = face_utils.shape_to_np(shape)
+        
+        # extract the left and right eye coordinates, then use the
+        # coordinates to compute the eye aspect ratio for both eyes
+        leftEye = shape[lStart:lEnd]
+        rightEye = shape[rStart:rEnd]
+        leftEAR = calculate_eye_aspect_ratio(leftEye)
+        rightEAR = calculate_eye_aspect_ratio(rightEye)
+        
+        # average the eye aspect ratio together for both eyes
+        ear = (leftEAR + rightEAR) / 2.0
+        
+        # compute the convex hull for the left and right eye, then
+        # visualize each of the eyes
+        leftEyeHull = cv2.convexHull(leftEye)
+        rightEyeHull = cv2.convexHull(rightEye)
+        cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
+        cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
+        
+        is_blink = False
+        COUNTER = previous_counter
+
+        # check to see if the eye aspect ratio is below the blink
+        # threshold, and if so, increment the blink frame counter
+        if ear < EYE_AR_THRESH:
+            COUNTER += 1
+            # print("Blink found.")
+            
+        # otherwise, the eye aspect ratio is not below the blink
+        # threshold
+        else:
+            # if the eyes were closed for a sufficient number of
+            # then increment the total number of blinks
+            if COUNTER >= EYE_AR_CONSEC_FRAMES:
+                is_blink = True
+
+            # reset the eye frame counter
+            COUNTER = 0
+
+    return is_blink, COUNTER
 
 def gen_blink_detect(video):
     COUNTER = 0

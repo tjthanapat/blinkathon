@@ -1,50 +1,102 @@
 from flask import Flask, Response, render_template
-from flask_socketio import SocketIO
-
+from flask_socketio import SocketIO, emit
 import cv2
+from eye_blinking import detect_blink
 
-from eye_blinking import gen_blink_detect
+app = Flask(__name__)
 
- 
-app = Flask(__name__) #creating the Flask class object   
+app.debug = True
+app.config["SECRET_KEY"] = "supersecret!"
+socketio = SocketIO(app)
+cap = cv2.VideoCapture(0)
 
-def gen(video):
+
+@socketio.on("connect")
+def handle_connect():
+    print("server and client connected")
+
+
+@socketio.on("start-game")
+def handle_start_game():
+    global cap
+    print("Blinkathon starts now.")
+
+    COUNTER = 0
+    TOTAL = 0
+
+    emit(
+        "game", dict(playing=True, blinkCounter=TOTAL, status="Blinkathon starts now.")
+    )
+
     while True:
-        success, frame = video.read()  # read the camera frame
-        if not success:
+        ret, frame = cap.read()
+        if not ret:
+            print("Error: cannot read a frame.")
             break
-        else:
 
-            # Setting parameter values
-            t_lower = 50  # Lower Threshold
-            t_upper = 150  # Upper threshold
-              
-            # Applying the Canny Edge filter
-            edge = cv2.Canny(frame, t_lower, t_upper)
+        try:
+            blinked, COUNTER = detect_blink(frame, COUNTER)
+            if blinked:
+                TOTAL += 1
+                emit(
+                    "game",
+                    dict(
+                        playing=True,
+                        blinkCounter=TOTAL,
+                        status=f"Total blinks: {TOTAL}",
+                    ),
+                )
+        except:
+            emit(
+                "game",
+                dict(
+                    playing=True,
+                    blinkCounter=TOTAL,
+                    error="Error in dectection.",
+                    status="Try to move your head. Blinkathon cannot detect your face.",
+                ),
+            )
 
-            ret, jpeg = cv2.imencode('.jpg', edge)
-            frame = jpeg.tobytes()
-            yield (b'--frame\r\n'
-                      b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
-    
-@app.route('/') #decorator drfines the   
-def home():
-    return render_template("home.html")
 
-@app.route('/about')
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+
+@app.route("/about")
 def about():
     return render_template("about.html")
 
-@app.route('/video-feed')
+
+def gen_frames(cap):
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Error: cannot read a frame.")
+            break
+
+        success, frame = cv2.imencode(".jpg", frame)
+        if not success:
+            print("Error: cannot encode a frame.")
+            break
+        yield (
+            b"--frame\r\n"
+            b"Content-Type: image/jpeg\r\n\r\n" + frame.tobytes() + b"\r\n"
+        )
+
+
+@app.route("/video-feed")
 def video_feed():
-		# Set to global because we refer the video variable on global scope, 
-		# Or in other words outside the function
-    global video
+    # Set to global because we refer the video variable on global scope,
+    # Or in other words outside the function
+    global cap
 
-		# Return the result on the web
-    return Response(gen_blink_detect(video),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    # Return the result on the web
+    return Response(
+        gen_frames(cap),
+        mimetype="multipart/x-mixed-replace; boundary=frame",
+    )
 
-if __name__ =='__main__':  
-    video = cv2.VideoCapture(0) 
-    app.run(debug = True)  
+
+if __name__ == "__main__":
+    socketio.run(app)
