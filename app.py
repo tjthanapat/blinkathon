@@ -60,7 +60,7 @@ def handle_start_game():
             )
 
 @socketio.on("win-game")
-def handle_start_game():
+def handle_win_game():
     global PLAYING
     PLAYING = False
     emit(
