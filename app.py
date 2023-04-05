@@ -16,19 +16,21 @@ def handle_connect():
     print("server and client connected")
 
 
+PLAYING = False
+
 @socketio.on("start-game")
 def handle_start_game():
-    global cap
+    global cap, PLAYING
     print("Blinkathon starts now.")
 
     COUNTER = 0
     TOTAL = 0
-
+    PLAYING = True
     emit(
         "game", dict(playing=True, blinkCounter=TOTAL, status="Blinkathon starts now.")
     )
 
-    while True:
+    while PLAYING:
         ret, frame = cap.read()
         if not ret:
             print("Error: cannot read a frame.")
@@ -53,9 +55,21 @@ def handle_start_game():
                     playing=True,
                     blinkCounter=TOTAL,
                     error="Error in dectection.",
-                    status="Try to move your head. Blinkathon cannot detect your face.",
+                    status="Blinkathon cannot detect your face.",
                 ),
             )
+
+@socketio.on("win-game")
+def handle_start_game():
+    global PLAYING
+    PLAYING = False
+    emit(
+        "game",
+        dict(
+            playing=False,
+            status="Congratulations! You win Blinkathon.",
+        ),
+    )
 
 
 @app.route("/")

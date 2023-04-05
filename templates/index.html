@@ -5,6 +5,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blinkathon</title>
+    <link href="/static/css/style.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
       integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
@@ -12,24 +19,37 @@
     ></script>
   </head>
   <body>
-    <div class="bg-gray-900 p-5">
-      <div>
-        <h1 class="text-3xl">CV Game</h1>
+    <div class="bg-orange-400 p-5">
+      <header>
+        <h1 class="text-4xl">CV Game</h1>
         <p>This is a super cool game.</p>
-        <img id="video-player" width="500" />
-        <p>
-          <a
-            href="/about"
-            class="bg-blue-500 hover:bg-blue-400 text-lg py-2 px-8 text-white hover:underline rounded-lg"
-            >about</a
-          >
-        </p>
-        <p id="gameStatus">Blinkathon status</p>
-        <button id="startBtn" onclick="startGame()">Start</button>
+      </header>
+      <div
+        id="game-console"
+        class="min-h-[400px] flex flex-col justify-center items-center"
+      >
+        <p id="game-status">Press a button to start.</p>
+        <button id="start-btn" class="btn-primary mt-2" onclick="startGame()">
+          Start
+        </button>
+      </div>
+      <div class="w-[200px] h-[150px] bg-slate-200 border border-slate-400 rounded-lg">
+        <img
+          id="live-camera"
+          alt="Live Camera"
+          class="w-full h-full object-cover rounded-lg"
+        />
       </div>
     </div>
+    <footer>
+      <p class="text-center text-sm px-5 py-2">
+        <a href="/about" class="btn-primary"
+          >Blinkathon by Computer Vision Syndrome</a
+        >
+      </p>
+    </footer>
     <script type="text/javascript" charset="utf-8">
-      var videoPlayer = document.getElementById('video-player');
+      var videoPlayer = document.getElementById('live-camera');
       videoPlayer.src = '/video-feed';
     </script>
     <script type="text/javascript" charset="utf-8">
@@ -39,23 +59,30 @@
       });
       socket.on('game', function (game) {
         console.log('game:', game);
-        
-        if (!!game.playing) {
-          const gameStatus = document.getElementById('gameStatus')
 
-          gameStatus.innerText = game.status
+        if (!!game.playing) {
+          const gameStatus = document.getElementById('game-status');
+          if (game.blinkCounter < 5) {
+            gameStatus.innerText = game.status;
+          } else {
+            socket.emit('win-game')
+            gameStatus.innerText = "Congratulations!"
+            const startBtn = document.getElementById('start-btn');
+            startBtn.innerText = 'Play Again'
+            startBtn.setAttribute('class', 'btn-primary mt-2');
+          }
         }
       });
 
       const startGame = () => {
-        const startBtn = document.getElementById("startBtn")
-        startBtn.remove()
-        socket.emit('start-game')
-      }
+        const startBtn = document.getElementById('start-btn');
+        startBtn.setAttribute('class', 'hidden');
+        socket.emit('start-game');
+      };
 
       const testemitfromclient = () => {
-        socket.emit('test', {msg:'test emit from client'})
-      }
+        socket.emit('test', { msg: 'test emit from client' });
+      };
     </script>
   </body>
 </html>
