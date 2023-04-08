@@ -224,6 +224,7 @@ ear = {0:{'ear':0.00},
         1:{'ear':0.00}}
 boxes = []
 success = False
+height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
 while cap.isOpened():
 
@@ -232,7 +233,6 @@ while cap.isOpened():
     if ret:
         frame= imutils.resize(frame, width=800)
         frame = cv2.flip(frame,1)
-        height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         rects = detector(gray, 0)
 
