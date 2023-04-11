@@ -215,7 +215,7 @@ OPENCV_OBJECT_TRACKERS = {
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(face_recognition_models.pose_predictor_model_location())
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 trackers = cv2.legacy.MultiTracker_create()
 flag = True
