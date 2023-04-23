@@ -1,0 +1,12 @@
+.car1, .car2{
+    width: 10%;
+    top:0;
+    position: absolute;
+}
+
+.background{
+    width: 80%;
+    position: relative;
+    /* top: 20%;
+    left: 10%; */
+}

@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.debug = True
 app.config["SECRET_KEY"] = "supersecret!"
 socketio = SocketIO(app)
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 
 @socketio.on("connect")
