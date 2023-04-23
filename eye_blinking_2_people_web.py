@@ -24,29 +24,30 @@ def eye_aspect_ratio(eye):
     
     return ear
 
-def find_min_max(mEAR_list, l_cal):
-    mEAR_list[0] = min(l_cal[0], mEAR_list[0])
-    mEAR_list[1] = min(l_cal[1], mEAR_list[1])
-    mEAR_list[2] = max(l_cal[2], mEAR_list[2])
+def find_min_max(mEAR_list, eye_cal):
+    prep_mEAR_list = [None,None,None,None,None,None]
+    prep_mEAR_list[0] = min(eye_cal[0], mEAR_list[0]) # P2-P6 close
+    prep_mEAR_list[1] = min(eye_cal[1], mEAR_list[1]) # P3-P5 close
+    prep_mEAR_list[2] = max(eye_cal[2], mEAR_list[2]) # P1-P4 close
 
-    mEAR_list[3] = max(l_cal[0], mEAR_list[3])
-    mEAR_list[4] = max(l_cal[1], mEAR_list[4])
-    mEAR_list[5] = min(l_cal[2], mEAR_list[5])
+    prep_mEAR_list[3] = max(eye_cal[0], mEAR_list[3]) # P2-P6 open
+    prep_mEAR_list[4] = max(eye_cal[1], mEAR_list[4]) # P3-P5 open
+    prep_mEAR_list[5] = min(eye_cal[2], mEAR_list[5]) # P1-P4 open
     
-    return mEAR_list # first 3 positions are mEAR closed. last 3 positions are mEAR opened
+    return prep_mEAR_list # first 3 positions are mEAR closed. last 3 positions are mEAR opened
 
 def cal_mEAR(l_mEAR_list, r_mEAR_list):
-    l_EAR_close = (l_mEAR_list[0]+l_mEAR_list[1])/(2.0*l_mEAR_list[2])
+    l_EAR_close = (l_mEAR_list[0]+l_mEAR_list[1])/(2.0*l_mEAR_list[2])  
     l_EAR_open = (l_mEAR_list[3]+l_mEAR_list[4])/(2.0*l_mEAR_list[5])
-    l_mEAR = (l_EAR_open + l_EAR_close)/2
+    l_mEAR = (l_EAR_open + l_EAR_close)/2.0
 
     r_EAR_close = (r_mEAR_list[0]+r_mEAR_list[1])/(2.0*r_mEAR_list[2])
     r_EAR_open = (r_mEAR_list[3]+r_mEAR_list[4])/(2.0*r_mEAR_list[5])
-    r_mEAR = (r_EAR_open + r_EAR_close)/2
+    r_mEAR = (r_EAR_open + r_EAR_close)/2.0
     
-    mEAR = (l_mEAR+r_mEAR)/2
+    mEAR = (l_mEAR+r_mEAR)/2.0
 
-    return mEAR-0.05
+    return mEAR
 
 def rect_to_bb(rect):
     ''' from dlib to opencv '''
@@ -95,8 +96,8 @@ def detect_blink(frame, flag, count):
         flag = True
 
     # add tracker to each face
-    for i in range(len(rects)):
-        rect = rect_to_bb(rects[i])
+    for rect in rects:
+        rect = rect_to_bb(rect)
         
         if flag:
             tracker = OPENCV_OBJECT_TRACKERS['mosse']()
@@ -104,7 +105,7 @@ def detect_blink(frame, flag, count):
 
     # get new bounding box (each face) from tracker
     (success, boxes) = trackers.update(frame)
-    is_blink = [False]*len(boxes) # assgin blink or not variable
+    is_blink = [False]*len(boxes) # assgin blink variable
     ear = [0]*len(boxes) # assign EAR each person
 
     if success:
@@ -118,19 +119,18 @@ def detect_blink(frame, flag, count):
             leftEye = shape[42:48]
             rightEye = shape[36:42]
 
-            l_p2_p6 = euclidean(shape[43],shape[47])
-            l_p3_p5 = euclidean(shape[44],shape[46])
-            l_p1_p4 = euclidean(shape[42],shape[45])
+            l_p2_p6 = np.linalg.norm(shape[43]-shape[47])
+            l_p3_p5 = np.linalg.norm(shape[44]-shape[46])
+            l_p1_p4 = np.linalg.norm(shape[42]-shape[45])
             
-            r_p2_p6 = euclidean(shape[37],shape[41])
-            r_p3_p5 = euclidean(shape[38],shape[40])
-            r_p1_p4 = euclidean(shape[36],shape[39])
+            r_p2_p6 = np.linalg.norm(shape[37]-shape[41])
+            r_p3_p5 = np.linalg.norm(shape[38]-shape[40])
+            r_p1_p4 = np.linalg.norm(shape[36]-shape[39])
 
             left_eye_cal.append([l_p2_p6, l_p3_p5, l_p1_p4])
             right_eye_cal.append([r_p2_p6, r_p3_p5, r_p1_p4])
             leftEAR = eye_aspect_ratio(leftEye)
             rightEAR = eye_aspect_ratio(rightEye)
-            print(ear)
             ear[j] = (leftEAR + rightEAR) / 2.0 # update EAR person j
             leftEyeHull = cv2.convexHull(leftEye)
             rightEyeHull = cv2.convexHull(rightEye)
@@ -170,7 +170,7 @@ detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(face_recognition_models.pose_predictor_model_location())
 
 MINIMUM_FRAME = 3
-minimun_ear = [0.18]*15
+minimun_ear = [0.24]*15
 
 counter = [0]*15 # 15 is the most people we can handle
 total = [0]*15
@@ -178,11 +178,12 @@ color= random_color(15)
 trackers = cv2.legacy.MultiTracker_create()
 flag = True
 
-l_mEAR_list = [[999,999,0,0,0,999]]*15 # [p2-p6 (close), p3-p5(close), p1-p4(close), p2-p6 (open), p3-p5(open), p1-p4(open)]
-r_mEAR_list = [[999,999,0,0,0,999]]*15
+l_mEAR_list = [[np.inf,np.inf,0.0,0.0,0.0,np.inf]]*15 # [p2-p6 (close), p3-p5(close), p1-p4(close), p2-p6 (open), p3-p5(open), p1-p4(open)]
+r_mEAR_list = [[np.inf,np.inf,0.0,0.0,0.0,np.inf]]*15
 
-# cap = cv2.VideoCapture("C:\\Users\\Gear\\Desktop\\Blinkathon\\test blinking2.mp4")
-cap = cv2.VideoCapture(1)
+# cap = cv2.VideoCapture("C:\\Users\\Gear\\Downloads\\Movie on 23-4-2566 BE at 20.43.mp4")
+# cap = cv2.VideoCapture("C:\\Users\\Gear\\Desktop\\Blinkathon\\test blinking.mp4")
+cap = cv2.VideoCapture(0)
 
 while cap.isOpened():
     
@@ -192,11 +193,11 @@ while cap.isOpened():
         break
 
     frame, blinked, counter, flag, l_cal, r_cal = detect_blink(frame, flag, counter)
-
     for i in range(len(blinked)):
         if blinked[i]:
             total[i] += 1
 
+    # j person
     for j in range(len(l_cal)):
 
         l_mEAR_list[j] = find_min_max(l_mEAR_list[j], l_cal[j])
