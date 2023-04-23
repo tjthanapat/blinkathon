@@ -26,14 +26,23 @@
       </header>
       <div
         id="game-console"
-        class="min-h-[400px] flex flex-col justify-center items-center"
+        class="my-10 flex flex-col justify-center items-center"
       >
         <p id="game-status">Press a button to start.</p>
-        <button id="start-btn" class="btn-primary mt-2" onclick="startGame()">
+        <button
+          id="start-btn"
+          class="btn-primary mt-2 text-black disabled:text-gray-400"
+          disabled="true"
+          onclick="startGame()"
+        >
           Start
         </button>
       </div>
-      <div class="w-[200px] h-[150px] bg-slate-200 border border-slate-400 rounded-lg">
+      <div class="flex justify-between">
+        <p>Player 1<br/><span id="player1-blink-count">0</span> counts</p>
+        <p class="text-right">Player 2<br/><span id="player2-blink-count">0</span> counts</p>
+      </div>
+      <div class="max-w-[400px] mx-auto bg-slate-200 border border-slate-400 rounded-lg">
         <img
           id="live-camera"
           alt="Live Camera"
@@ -57,31 +66,40 @@
       socket.on('connect', function () {
         console.log('connected!');
       });
+
+      setInterval(() => {
+        socket.emit('blinkathon-status');
+      }, 1000);
+
       socket.on('game', function (game) {
         console.log('game:', game);
-
-        if (!!game.playing) {
-          const gameStatus = document.getElementById('game-status');
-          if (game.blinkCounter < 5) {
-            gameStatus.innerText = game.status;
-          } else {
-            socket.emit('win-game')
-            gameStatus.innerText = "Congratulations!"
-            const startBtn = document.getElementById('start-btn');
-            startBtn.innerText = 'Play Again'
-            startBtn.setAttribute('class', 'btn-primary mt-2');
-          }
+        const startBtn = document.getElementById('start-btn');
+        if (!!game.playable) {
+          startBtn.disabled = false;
+        } else {
+          startBtn.disabled = true;
         }
+        const gameStatus = document.getElementById('game-status');
+        if (!!game.detecting) {
+          gameStatus.innerText = "Blink!"
+        }
+
+        const player1BlinkCount = document.getElementById('player1-blink-count')
+        player1BlinkCount.innerText = game.players[0].blinkCount
+        const player2BlinkCount = document.getElementById('player2-blink-count')
+        player2BlinkCount.innerText = game.players[1].blinkCount
       });
 
       const startGame = () => {
         const startBtn = document.getElementById('start-btn');
-        startBtn.setAttribute('class', 'hidden');
+        startBtn.style.display = "none"
         socket.emit('start-game');
+        const gameStatus = document.getElementById('game-status');
+        gameStatus.innerText = "Calculating... - Please keep your eyes open."
       };
 
-      const testemitfromclient = () => {
-        socket.emit('test', { msg: 'test emit from client' });
+      window.onbeforeunload = function () {
+        socket.emit('exit', { msg: 'Bye!' });
       };
     </script>
   </body>

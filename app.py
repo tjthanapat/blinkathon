@@ -1,75 +1,41 @@
 from flask import Flask, Response, render_template
 from flask_socketio import SocketIO, emit
 import cv2
-from eye_blinking import detect_blink
+
+from blinkathon import Blinkathon
+
 
 app = Flask(__name__)
-
 app.debug = True
 app.config["SECRET_KEY"] = "supersecret!"
 socketio = SocketIO(app)
+
 cap = cv2.VideoCapture(0)
+blinkathon = Blinkathon(cap)
 
 
 @socketio.on("connect")
 def handle_connect():
+    global blinkathon
     print("server and client connected")
+    blinkathon.stop_detect_blinks()
 
 
-PLAYING = False
+@socketio.on("blinkathon-status")
+def handle_blinkathon_status():
+    emit("game", blinkathon.status)
+
+
+@socketio.on("exit")
+def handle_exit():
+    print("User exited the game.")
+
 
 @socketio.on("start-game")
 def handle_start_game():
     global cap, PLAYING
     print("Blinkathon starts now.")
-
-    COUNTER = 0
-    TOTAL = 0
-    PLAYING = True
-    emit(
-        "game", dict(playing=True, blinkCounter=TOTAL, status="Blinkathon starts now.")
-    )
-
-    while PLAYING:
-        ret, frame = cap.read()
-        if not ret:
-            print("Error: cannot read a frame.")
-            break
-
-        try:
-            blinked, COUNTER = detect_blink(frame, COUNTER)
-            if blinked:
-                TOTAL += 1
-                emit(
-                    "game",
-                    dict(
-                        playing=True,
-                        blinkCounter=TOTAL,
-                        status=f"Total blinks: {TOTAL}",
-                    ),
-                )
-        except:
-            emit(
-                "game",
-                dict(
-                    playing=True,
-                    blinkCounter=TOTAL,
-                    error="Error in dectection.",
-                    status="Blinkathon cannot detect your face.",
-                ),
-            )
-
-@socketio.on("win-game")
-def handle_win_game():
-    global PLAYING
-    PLAYING = False
-    emit(
-        "game",
-        dict(
-            playing=False,
-            status="Congratulations! You win Blinkathon.",
-        ),
-    )
+    blinkathon.start_detect_blinks()
 
 
 @app.route("/")
@@ -82,32 +48,10 @@ def about():
     return render_template("about.html")
 
 
-def gen_frames(cap):
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Error: cannot read a frame.")
-            break
-
-        success, frame = cv2.imencode(".jpg", frame)
-        if not success:
-            print("Error: cannot encode a frame.")
-            break
-        yield (
-            b"--frame\r\n"
-            b"Content-Type: image/jpeg\r\n\r\n" + frame.tobytes() + b"\r\n"
-        )
-
-
 @app.route("/video-feed")
 def video_feed():
-    # Set to global because we refer the video variable on global scope,
-    # Or in other words outside the function
-    global cap
-
-    # Return the result on the web
     return Response(
-        gen_frames(cap),
+        blinkathon.generate_frames(),
         mimetype="multipart/x-mixed-replace; boundary=frame",
     )
 
