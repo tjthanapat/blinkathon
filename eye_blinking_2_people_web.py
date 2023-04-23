@@ -85,8 +85,6 @@ def detect_blink(frame, flag, count):
     frame = cv2.flip(frame,1)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     rects = detector(gray, 0)
-    is_blink = [False]*len(rects) # assgin blink or not variable
-    ear = [0]*len(rects) # assign EAR each person
 
     left_eye_cal = [] # index represent person
     right_eye_cal = []
@@ -106,7 +104,9 @@ def detect_blink(frame, flag, count):
 
     # get new bounding box (each face) from tracker
     (success, boxes) = trackers.update(frame)
-    
+    is_blink = [False]*len(boxes) # assgin blink or not variable
+    ear = [0]*len(boxes) # assign EAR each person
+
     if success:
         # loop through each bounding box (each bounding box = each face = each person)
         for j in range(len(boxes)):
@@ -130,6 +130,7 @@ def detect_blink(frame, flag, count):
             right_eye_cal.append([r_p2_p6, r_p3_p5, r_p1_p4])
             leftEAR = eye_aspect_ratio(leftEye)
             rightEAR = eye_aspect_ratio(rightEye)
+            print(ear)
             ear[j] = (leftEAR + rightEAR) / 2.0 # update EAR person j
             leftEyeHull = cv2.convexHull(leftEye)
             rightEyeHull = cv2.convexHull(rightEye)
@@ -180,8 +181,8 @@ flag = True
 l_mEAR_list = [[999,999,0,0,0,999]]*15 # [p2-p6 (close), p3-p5(close), p1-p4(close), p2-p6 (open), p3-p5(open), p1-p4(open)]
 r_mEAR_list = [[999,999,0,0,0,999]]*15
 
-cap = cv2.VideoCapture("C:\\Users\\Gear\\Desktop\\Blinkathon\\test blinking2.mp4")
-# cap = cv2.VideoCapture(0)
+# cap = cv2.VideoCapture("C:\\Users\\Gear\\Desktop\\Blinkathon\\test blinking2.mp4")
+cap = cv2.VideoCapture(1)
 
 while cap.isOpened():
     
