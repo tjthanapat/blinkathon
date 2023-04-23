@@ -24,6 +24,30 @@ def eye_aspect_ratio(eye):
     
     return ear
 
+def find_min_max(mEAR_list, l_cal):
+    mEAR_list[0] = min(l_cal[0], mEAR_list[0])
+    mEAR_list[1] = min(l_cal[1], mEAR_list[1])
+    mEAR_list[2] = max(l_cal[2], mEAR_list[2])
+
+    mEAR_list[3] = max(l_cal[0], mEAR_list[3])
+    mEAR_list[4] = max(l_cal[1], mEAR_list[4])
+    mEAR_list[5] = min(l_cal[2], mEAR_list[5])
+    
+    return mEAR_list # first 3 positions are mEAR closed. last 3 positions are mEAR opened
+
+def cal_mEAR(l_mEAR_list, r_mEAR_list):
+    l_EAR_close = (l_mEAR_list[0]+l_mEAR_list[1])/(2.0*l_mEAR_list[2])
+    l_EAR_open = (l_mEAR_list[3]+l_mEAR_list[4])/(2.0*l_mEAR_list[5])
+    l_mEAR = (l_EAR_open + l_EAR_close)/2
+
+    r_EAR_close = (r_mEAR_list[0]+r_mEAR_list[1])/(2.0*r_mEAR_list[2])
+    r_EAR_open = (r_mEAR_list[3]+r_mEAR_list[4])/(2.0*r_mEAR_list[5])
+    r_mEAR = (r_EAR_open + r_EAR_close)/2
+    
+    mEAR = (l_mEAR+r_mEAR)/2
+
+    return mEAR-0.05
+
 def rect_to_bb(rect):
     ''' from dlib to opencv '''
     x = rect.left()
@@ -44,17 +68,35 @@ def bb_to_rect(bb):
 
     return dlib.rectangle(left, top, right, bottom)
 
-def detect_blink(frame, flag):
+def random_color(amount):
+    np.random.seed(123)
+    color = []
+    for _ in range(amount):
+        r = np.random.randint(0,255)
+        g = np.random.randint(0,255)
+        b = np.random.randint(0,255)
+        rgb = (r,g,b)
+        color.append(rgb)
+    return color
+
+def detect_blink(frame, flag, count):
     global trackers
     frame= imutils.resize(frame, width=800)
     frame = cv2.flip(frame,1)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     rects = detector(gray, 0)
-   
+    is_blink = [False]*len(rects) # assgin blink or not variable
+    ear = [0]*len(rects) # assign EAR each person
+
+    left_eye_cal = [] # index represent person
+    right_eye_cal = []
+
+   # if rects is more than tracker, then create new trackers and add tracker
     if (len(rects) == 0) or (len(trackers.getObjects()) < len(rects)):
         trackers = cv2.legacy.MultiTracker_create()
         flag = True
 
+    # add tracker to each face
     for i in range(len(rects)):
         rect = rect_to_bb(rects[i])
         
@@ -62,42 +104,56 @@ def detect_blink(frame, flag):
             tracker = OPENCV_OBJECT_TRACKERS['mosse']()
             trackers.add(tracker, frame, rect)
 
+    # get new bounding box (each face) from tracker
     (success, boxes) = trackers.update(frame)
     
     if success:
-        # print(len(boxes))
+        # loop through each bounding box (each bounding box = each face = each person)
         for j in range(len(boxes)):
             x,y,w,h = int(boxes[j][0]),int(boxes[j][1]),int(boxes[j][2]),int(boxes[j][3])
-            rect = bb_to_rect([int(v) for v in boxes[j]])
-            shape = predictor(gray, rect)
+            rect = bb_to_rect([int(v) for v in boxes[j]]) # convert to rect object for predict face landmark
+            shape = predictor(gray, rect) # predict face landmark
             shape = face_utils.shape_to_np(shape)
             cv2.rectangle(frame, (x, y), (x+w, y+h), color[j], 2)
             leftEye = shape[42:48]
             rightEye = shape[36:42]
+
+            l_p2_p6 = euclidean(shape[43],shape[47])
+            l_p3_p5 = euclidean(shape[44],shape[46])
+            l_p1_p4 = euclidean(shape[42],shape[45])
+            
+            r_p2_p6 = euclidean(shape[37],shape[41])
+            r_p3_p5 = euclidean(shape[38],shape[40])
+            r_p1_p4 = euclidean(shape[36],shape[39])
+
+            left_eye_cal.append([l_p2_p6, l_p3_p5, l_p1_p4])
+            right_eye_cal.append([r_p2_p6, r_p3_p5, r_p1_p4])
             leftEAR = eye_aspect_ratio(leftEye)
             rightEAR = eye_aspect_ratio(rightEye)
-            ear[j] = (leftEAR + rightEAR) / 2.0
+            ear[j] = (leftEAR + rightEAR) / 2.0 # update EAR person j
             leftEyeHull = cv2.convexHull(leftEye)
             rightEyeHull = cv2.convexHull(rightEye)
             cv2.drawContours(frame, [leftEyeHull], -1, color[j], 1)
             cv2.drawContours(frame, [rightEyeHull], -1, color[j], 1)
             cv2.putText(frame, "Blinks_{}: {} EAR_{}: {:.2f} mEAR_{}: {:.2f}".format(j, total[j], 
                                                                         j, ear[j], 
-                                                                        j, minimun_ear), (x-50, y-20),
-                                                                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, color[j], 2)
+                                                                        j, minimun_ear[j]), (x-50, y-20),
+                                                                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, color[j], 2) 
 
-            if ear[j] <= minimun_ear:
-                counter[j] += 1
+            if ear[j] <= minimun_ear[j]: # if ear person j less than threshold count frame +1
+                count[j] += 1
                         
             else:
-                if counter[j] >= minimum_frame:
+                if count[j] >= MINIMUM_FRAME: # if counted frame more than consecutive threshold then person j has blinked
                     is_blink[j] = True
                     
-                counter[j] = 0
+                count[j] = 0 # reset counted frame person j
+
+    # assgin flag to false if tracker and person are equal      
     if flag and (len(trackers.getObjects()) >= len(rects)):            
         flag = False
 
-    return frame, is_blink[0], is_blink[1], counter[0], counter[1], flag
+    return frame, is_blink, count, flag, left_eye_cal, right_eye_cal
 
 OPENCV_OBJECT_TRACKERS = {
 	"csrt": cv2.legacy.TrackerCSRT_create,
@@ -112,21 +168,20 @@ OPENCV_OBJECT_TRACKERS = {
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(face_recognition_models.pose_predictor_model_location())
 
-color= [(0,255,0),(0,100,255)]
-minimum_frame = 3
-minimun_ear = 0.24
+MINIMUM_FRAME = 3
+minimun_ear = [0.18]*15
 
-counter = [0,0]
-total = [0,0]
-is_blink = [False,False]
-
-cap = cv2.VideoCapture("C:\\Users\\Gear\\Desktop\\Blinkathon\\test blinking2.mp4")
-# cap = cv2.VideoCapture(0)
-
+counter = [0]*15 # 15 is the most people we can handle
+total = [0]*15
+color= random_color(15)
 trackers = cv2.legacy.MultiTracker_create()
 flag = True
 
-ear = [0,0]
+l_mEAR_list = [[999,999,0,0,0,999]]*15 # [p2-p6 (close), p3-p5(close), p1-p4(close), p2-p6 (open), p3-p5(open), p1-p4(open)]
+r_mEAR_list = [[999,999,0,0,0,999]]*15
+
+cap = cv2.VideoCapture("C:\\Users\\Gear\\Desktop\\Blinkathon\\test blinking2.mp4")
+# cap = cv2.VideoCapture(0)
 
 while cap.isOpened():
     
@@ -135,15 +190,18 @@ while cap.isOpened():
     if not ret:
         break
 
-    frame, is_blink[0], is_blink[1], counter[0], counter[1], flag2 = detect_blink(frame, flag)
-    
-    flag = flag2
-    if is_blink[0]:
-        total[0] += 1
-    if is_blink[1]:
-        total[1] += 1
-    is_blink[0]=0
-    is_blink[1]=0
+    frame, blinked, counter, flag, l_cal, r_cal = detect_blink(frame, flag, counter)
+
+    for i in range(len(blinked)):
+        if blinked[i]:
+            total[i] += 1
+
+    for j in range(len(l_cal)):
+
+        l_mEAR_list[j] = find_min_max(l_mEAR_list[j], l_cal[j])
+        r_mEAR_list[j] = find_min_max(r_mEAR_list[j], r_cal[j])
+        minimun_ear[j] = cal_mEAR(l_mEAR_list[j], r_mEAR_list[j])
+
     cv2.imshow("Frame", frame)
         
     key = cv2.waitKey(1) & 0xFF
@@ -151,7 +209,6 @@ while cap.isOpened():
         cap.release()
         cv2.destroyAllWindows()
         break
-
 
 cap.release()
 cv2.destroyAllWindows()
