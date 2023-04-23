@@ -1,31 +1,39 @@
 from collections.abc import Iterator
 import cv2
-from custom_types import Frame
+import numpy as np
 
 
-def read_video_capture(cap: cv2.VideoCapture) -> Frame:
+def read_video_capture(
+    cap: cv2.VideoCapture,
+    horizontal_flip: bool = True,
+) -> np.ndarray:
     """Read a frame from a given video capture.
 
     Parameters
     ----------
     cap : cv2.VideoCapture
+    horizontal_flip : bool, optional
+        If true, frame is holizontally flipped, by default True
 
     Returns
     -------
-    array for image
+    np.ndarray
+        image array
     """
     ret, frame = cap.read()
     if not ret:
         raise Exception("Cannot read a frame from video capture.")
+    if horizontal_flip:
+        frame = cv2.flip(frame, 1)
     return frame
 
 
-def encode_frame(frame: Frame) -> bytes:
+def encode_frame(frame: np.ndarray) -> bytes:
     """Encode frame to jpg bytes.
 
     Parameters
     ----------
-    frame : array of image
+    frame : image array
 
     Returns
     -------
@@ -35,27 +43,3 @@ def encode_frame(frame: Frame) -> bytes:
     if not success:
         raise Exception("Cannot encode a frame.")
     return frame.tobytes()
-
-
-def gen_frames(cap: cv2.VideoCapture) -> Iterator[bytes]:
-    """Generate frames from a given video capture.
-
-    Parameters
-    ----------
-    cap : cv2.VideoCapture
-
-    Yields
-    ------
-    Iterator[bytes]
-    """
-    while True:
-        try:
-            frame = read_video_capture(cap)
-            frame = encode_frame(frame)
-            yield (
-                b"--frame\r\n" 
-                b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
-            )
-        except Exception as err:
-            print(err)
-            # emit('game', dict(errMessage=str(err)))
