@@ -1,4 +1,3 @@
-from collections.abc import Iterator
 import cv2
 import numpy as np
 
