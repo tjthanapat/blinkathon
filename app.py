@@ -9,7 +9,9 @@ app = Flask(__name__)
 app.debug = True
 app.config["SECRET_KEY"] = "supersecret!"
 socketio = SocketIO(app)
+
 cap = cv2.VideoCapture(0)
+blinkathon = Blinkathon(cap)
 
 
 @socketio.on("connect")
