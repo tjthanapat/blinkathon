@@ -90,7 +90,6 @@ class Blinkathon:
                             colors[i % 2],
                             1,
                         )
-                        n_frames_detect_blink += 1
 
                     cv2.rectangle(frame, (x, y), (x + w, y + h), colors[i % 2], 2)
                     cv2.putText(
@@ -102,14 +101,18 @@ class Blinkathon:
                         colors[i % 2],
                         2,
                     )
+            
             self.status = dict(
-                playable=len(rects) >= 2,
+                playable=len(boxes) >= 2,
                 detecting=n_frames_detect_blink >= N_FRAMES_TO_CALC_EAR_THRESH,
                 players=[
                     dict(blinkCount=self.blink_detectors[0].total_count),
                     dict(blinkCount=self.blink_detectors[1].total_count),
                 ],
             )
+
+            n_frames_detect_blink += 1
+            
             frame = camera_utils.encode_frame(frame)
             yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
 
