@@ -9,7 +9,7 @@ app = Flask(__name__)
 app.debug = True
 app.config["SECRET_KEY"] = "supersecret!"
 socketio = SocketIO(app)
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 
 @socketio.on("connect")
@@ -46,6 +46,7 @@ def about():
 
 @app.route("/video-feed")
 def video_feed():
+    global blinkathon
     return Response(
         blinkathon.generate_frames(),
         mimetype="multipart/x-mixed-replace; boundary=frame",
