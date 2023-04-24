@@ -5,8 +5,8 @@ import dlib
 import cv2
 import face_recognition_models
 
-def euclidean(x,y):
-    ''' calculate euclidean distance'''
+def euclidean(x:np.ndarray, y:np.ndarray):
+    '''calculate euclidean distance'''
     euclidean_dist = np.sqrt(np.sum((x-y)**2))
     return euclidean_dist
 
@@ -35,10 +35,7 @@ def mEAR_closed(p1,p2,p3,p4,p5,p6):
         mEAR_close = (A + B) / (2.0 * C)
 
     except:
-        print('Cannot detect eye')
-        cap.release()
-        cv2.destroyAllWindows()
-        exit()
+        raise Exception("cannot detect eye")
 
     return   mEAR_close
 
@@ -51,10 +48,7 @@ def mEAR_open(p1,p2,p3,p4,p5,p6):
         mEAR_open = (A + B) / (2.0 * C)
 
     except:
-        print('Cannot detect eye')
-        cap.release()
-        cv2.destroyAllWindows()
-        exit()
+        raise Exception("cannot detect eye")
     
     return mEAR_open
 
@@ -201,7 +195,7 @@ landmark = {0:{'P1_L':np.empty((0,2)),
                 'P5_R':np.empty((0,2)),
                 'P6_R':np.empty((0,2))}}
 
-
+# รูปแบบ model tracker ที่มีทั้งหมด
 OPENCV_OBJECT_TRACKERS = {
 	"csrt": cv2.legacy.TrackerCSRT_create,
 	"kcf": cv2.legacy.TrackerKCF_create,
@@ -212,11 +206,14 @@ OPENCV_OBJECT_TRACKERS = {
 	"mosse": cv2.legacy.TrackerMOSSE_create
 }
 
+# detect model
 detector = dlib.get_frontal_face_detector()
+# facial mesh model
 predictor = dlib.shape_predictor(face_recognition_models.pose_predictor_model_location())
 
 cap = cv2.VideoCapture(1)
 
+# initiate trackers
 trackers = cv2.legacy.MultiTracker_create()
 flag = True
 color= [(0,255,0),(0,100,255)]
@@ -224,7 +221,6 @@ ear = {0:{'ear':0.00},
         1:{'ear':0.00}}
 boxes = []
 success = False
-height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
 while cap.isOpened():
 
@@ -237,33 +233,36 @@ while cap.isOpened():
         rects = detector(gray, 0)
 
         # print('find {} people'.format(len(rects)))
+        # เช็กว่าถ้า detector ไม่เจอใครให้สร้าง trackers ใหม่ หรือ ถ้าคนที่มีอยู่ในเฟรมมากกว่า tracker ให้สร้าง trackers ใหม่
         if (len(rects) == 0) or (len(trackers.getObjects()) < len(rects)):
             trackers = cv2.legacy.MultiTracker_create()
             flag = True
 
         # print('flag: ',flag)
+        # เข้าถึง roi ของหน้าแต่ละคน
         for i in range(len(rects)):
-            rect = rect_to_bb(rects[i])
+            rect = rect_to_bb(rects[i]) # แปลงจาก rect object เป็น bounding box
             
-            if flag:
+            if flag: # ถ้า flag เป็น True ให้ทำการเพิ่ม tracker เข้าไปใน trackers
                 tracker = OPENCV_OBJECT_TRACKERS['mosse']()
                 trackers.add(tracker, frame, rect)
                 # print('tracker added')
                 
             # print('now I have {} trackers and {} rects'.format(len(trackers.getObjects()),len(rects)))
 
-        (success, boxes) = trackers.update(frame)
+        (success, boxes) = trackers.update(frame) # boxes คือ ROI แต่ละ frame (ไม่ได้เป็น rect object)
 
         # print('update tracker', success)
+        # tracker update ค่าสำเร็จ success จะเท่ากับ True
         if success:        
             for j in range(len(boxes)):
                 try:
-                    (x,y,w,h) = [int(v) for v in boxes[j]]
-                    ear[j]['ear'] = blink_count(j,frame,bb_to_rect([x,y,w,h]),color[j])
-                    cv2.rectangle(frame, (x, y), (x+w, y+h), color[j], 2)
-                    text_on_frame(j,(x-50),(y-20))
+                    (x,y,w,h) = [int(v) for v in boxes[j]] # ดึงค่าจาก boxes ของแต่ละคน
+                    ear[j]['ear'] = blink_count(j,frame,bb_to_rect([x,y,w,h]),color[j]) # อัปเดตค่า ear ของแต่ละคน
+                    cv2.rectangle(frame, (x, y), (x+w, y+h), color[j], 2) # วาดสี่เหลี่ยมของหน้าแต่ละคน
+                    text_on_frame(j,(x-50),(y-20)) # แสดงค่าที่อยู่บนหัว
                 except Exception as e:
-                    print(e)
+                    raise Exception(e)
 
         cv2.imshow("Frame", frame)
         
@@ -274,7 +273,7 @@ while cap.isOpened():
             break
 
         if flag and (len(trackers.getObjects()) >= len(rects)):            
-            flag = False
+            flag = False # ถ้า flag เป็น false จะหยุดการเพิ่ม tracker
         # print('End frame flag: ',flag)
 
     else:
