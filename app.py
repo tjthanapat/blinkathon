@@ -33,8 +33,6 @@ def handle_exit():
 
 @socketio.on("start-game")
 def handle_start_game():
-    global cap, PLAYING
-    print("Blinkathon starts now.")
     blinkathon.start_detect_blinks()
 
 
