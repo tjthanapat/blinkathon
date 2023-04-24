@@ -1,9 +1,10 @@
+from typing import Tuple
 import cv2
 import numpy as np
 import dlib
 
 
-def convert_rect_to_bb(rect: dlib.rectangle) -> tuple[int, int, int, int]:
+def convert_rect_to_bb(rect: dlib.rectangle) -> Tuple[int, int, int, int]:
     """Convert dlib rectangle to bounding box.
 
     Parameters
@@ -25,7 +26,7 @@ def convert_rect_to_bb(rect: dlib.rectangle) -> tuple[int, int, int, int]:
     return (x, y, w, h)
 
 
-def convert_bb_to_rect(bb: tuple[int, int, int, int]) -> dlib.rectangle:
+def convert_bb_to_rect(bb: Tuple[int, int, int, int]) -> dlib.rectangle:
     """Convert bounding box to dlib rectangle.
 
     Parameters
@@ -60,8 +61,8 @@ OPENCV_OBJECT_TRACKERS = {
 
 def draw_eye_landmarks(
     frame,
-    eye_landmarks: tuple[np.ndarray, np.ndarray],
-    color: tuple[int, int, int],
+    eye_landmarks: Tuple[np.ndarray, np.ndarray],
+    color: Tuple[int, int, int],
 ):
     left_eye, right_eye = eye_landmarks
     left_eye_hull = cv2.convexHull(left_eye)

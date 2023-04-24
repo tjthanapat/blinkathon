@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from typing import Tuple, List
 import dlib
 from imutils import face_utils
 import face_recognition_models
@@ -11,7 +12,7 @@ landmark_predictor = dlib.shape_predictor(
 )
 
 
-def detect_faces(frame_gray: np.ndarray) -> list[dlib.rectangle]:
+def detect_faces(frame_gray: np.ndarray) -> List[dlib.rectangle]:
     rects = frontal_face_detector(frame_gray, 0)
     return list(rects)
 
@@ -43,7 +44,7 @@ class BlinkDetector:
 
     def calculate_ear_thresh(
         self,
-        eye_landmarks: tuple[np.ndarray, np.ndarray],
+        eye_landmarks: Tuple[np.ndarray, np.ndarray],
     ):
         ### Calculate adaptive threshold here
         ### Define required functions in blink_utils
@@ -53,7 +54,7 @@ class BlinkDetector:
 
     def detect_blink(
         self,
-        eye_landmarks: tuple[np.ndarray, np.ndarray],
+        eye_landmarks: Tuple[np.ndarray, np.ndarray],
     ):
         ### Calculate ear score here
         ### Define required functions in blink_utils
