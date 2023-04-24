@@ -27,7 +27,7 @@ class Blinkathon:
         ]
         self.status = None
 
-    def generate_frames(self) -> Iterator[bytes]:
+    def generate_frames(self):
         global detecting_blink, n_frames_detect_blink
 
         while True:
