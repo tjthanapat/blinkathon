@@ -89,9 +89,7 @@
     const player1 = "P1";
     const player2 = "P2";
 
-
-
-    const handleKeyDown = (event) => {
+    // const handleKeyDown = (event) => {
 
       if (event.key === "ArrowLeft") {
         car1Pos = Math.max(car1Pos + speed, 0);
@@ -196,7 +194,13 @@
       player1BlinkCount.innerText = game.players[0].blinkCount
       const player2BlinkCount = document.getElementById('player2-blink-count')
       player2BlinkCount.innerText = game.players[1].blinkCount
-
+      
+      car1Pos = Math.max(car1Pos + game.players[0].blinkCount, 0);
+      car1.style.left = car1Pos + "%";
+      counter1++;
+      car2Pos = Math.max(car2Pos + game.players[1].blinkCount, 0);
+      car2.style.left = car2Pos + "%";
+      counter2++; // increment counter for player 2
       // car1Pos = Math.max(player1BlinkCount + speed, 0);
       // car1.style.left = car1Pos + "%";
       // counter1++; // increment counter for player 1
