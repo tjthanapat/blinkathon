@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
 
-from collections.abc import Iterator
-
 from blink_detector import detect_faces, predict_landmarks, BlinkDetector
 import blink_utilities as blink_utils
 import camera_utilities as camera_utils
@@ -26,14 +24,16 @@ class Blinkathon:
             BlinkDetector(),
         ]
         self.status = None
+        self.current_detected_faces = list()
 
-    def generate_frames(self) -> Iterator[bytes]:
+    def generate_frames(self):
         global detecting_blink, n_frames_detect_blink
 
         while True:
             frame = camera_utils.read_video_capture(self.cap)
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             rects = detect_faces(gray)
+            self.current_detected_faces = list()
 
             if (len(rects) == 0) or (len(self.trackers.getObjects()) < len(rects)):
                 self.trackers = cv2.legacy.MultiTracker_create()
