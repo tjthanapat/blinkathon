@@ -38,18 +38,23 @@ class BlinkDetector:
         self.ear_thresh = DEFAULT_EYE_AR_THRESH
         self.total_count = 0
         self.consec_frame_count = 0
-        self.first_n_eye_landmarks = list()
+        self.first_n_eye_landmarks = list(
+            [[[], [], [], [], [], []], [[], [], [], [], [], []]])
 
     def store_first_n_eye_landmarks(self, eye_landmarks):
-        self.first_n_eye_landmarks.append(eye_landmarks)
+        for i in range(2):
+            for j in range(6):
+                self.first_n_eye_landmarks[i][j].append(eye_landmarks[i][j])
+        # self.first_n_eye_landmarks.append(eye_landmarks)
 
     def calculate_ear_thresh(
         self,
-        eye_landmarks: Tuple[np.ndarray, np.ndarray],
+        eye_landmarks: list([[[], [], [], [], [], []], [[], [], [], [], [], []]]),
     ):
-        ### Calculate adaptive threshold here
-        ### Define required functions in blink_utils
-        left_eye, right_eye = eye_landmarks
+        # Calculate adaptive threshold here
+        # Define required functions in blink_utils
+        left_eye = eye_landmarks[0]
+        right_eye = eye_landmarks[1]
         left_eye_mEAR = blink_utils.cal_mEAR(left_eye)
         right_eye_mEAR = blink_utils.cal_mEAR(right_eye)
         new_ear_thresh = (left_eye_mEAR+right_eye_mEAR)/2
@@ -57,10 +62,10 @@ class BlinkDetector:
 
     def detect_blink(
         self,
-        eye_landmarks: Tuple[np.ndarray, np.ndarray],
+        eye_landmarks: list([[[], [], [], [], [], []], [[], [], [], [], [], []]]),
     ):
-        ### Calculate ear score here
-        ### Define required functions in blink_utils
+        # Calculate ear score here
+        # Define required functions in blink_utils
         left_eye, right_eye = eye_landmarks
         left_eye_EAR = blink_utils.cal_EAR(left_eye)
         right_eye_EAR = blink_utils.cal_EAR(right_eye)
@@ -71,5 +76,5 @@ class BlinkDetector:
             if self.consec_frame_count >= EYE_AR_CONSEC_FRAMES:
                 self.total_count += 1
             self.consec_frame_count = 0
-        
+
         return ear_score

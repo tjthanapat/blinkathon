@@ -70,11 +70,13 @@ def draw_eye_landmarks(
     cv2.drawContours(frame, [left_eye_hull], -1, color, 1)
     cv2.drawContours(frame, [right_eye_hull], -1, color, 1)
 
-def euclidean(x:np.ndarray, y:np.ndarray):
+
+def euclidean(x: np.ndarray, y: np.ndarray):
     '''calculate euclidean distance'''
 
     euclidean_dist = np.sqrt(np.sum((x-y)**2))
     return euclidean_dist
+
 
 def mEAR_closed(landmarks):
     ''' 
@@ -82,25 +84,28 @@ def mEAR_closed(landmarks):
     https://peerj.com/articles/cs-943/
     '''
 
-    A = min(np.array(list(map(euclidean, landmarks[1],landmarks[5]))))
-    B = min(np.array(list(map(euclidean, landmarks[2],landmarks[4]))))
-    C = max(np.array(list(map(euclidean, landmarks[0],landmarks[3]))))
+    A = min(list(map(euclidean, landmarks[1], landmarks[5])))
+    B = min(list(map(euclidean, landmarks[2], landmarks[4])))
+    C = max(list(map(euclidean, landmarks[0], landmarks[3])))
     mEAR_close = (A + B) / (2.0 * C)
 
-    return   mEAR_close
+    return mEAR_close
+
 
 def mEAR_open(landmarks):
     ''' calculate mEAR'''
 
-    A = max(np.array(list(map(euclidean, landmarks[1],landmarks[5]))))
-    B = max(np.array(list(map(euclidean, landmarks[2],landmarks[4]))))
-    C = min(np.array(list(map(euclidean, landmarks[0],landmarks[3]))))
+    A = max(list(map(euclidean, landmarks[1], landmarks[5])))
+    B = max(list(map(euclidean, landmarks[2], landmarks[4])))
+    C = min(list(map(euclidean, landmarks[0], landmarks[3])))
     mEAR_open = (A + B) / (2.0 * C)
-    
+
     return mEAR_open
+
 
 def cal_mEAR(landmarks):
     return (mEAR_closed(landmarks)+mEAR_open(landmarks))/2
+
 
 def cal_EAR(landmarks):
     ''' 
@@ -112,6 +117,5 @@ def cal_EAR(landmarks):
     C = euclidean(landmarks[0], landmarks[3])
 
     ear = (A + B) / (2.0 * C)
-    
-    return ear
 
+    return ear
