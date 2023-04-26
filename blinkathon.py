@@ -5,7 +5,7 @@ from blink_detector import detect_faces, predict_landmarks, BlinkDetector
 import blink_utilities as blink_utils
 
 
-colors = [(0, 255, 0), (0, 100, 255)]
+colors = [(0, 0, 255), (0, 255, 0)]
 
 N_FRAMES_TO_CALC_EAR_THRESH = 90
 

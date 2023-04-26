@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  font-family: 'Press Start 2P', cursive;
+  font-family: 'Press Start 2P', monospace;
 }
 
 .btn-primary {

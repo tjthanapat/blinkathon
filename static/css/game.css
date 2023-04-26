@@ -25,3 +25,11 @@
 }
 
 
+.bg-sky {
+  background-image: url('../image/sky.jpg');
+  background-size: contain;
+}
+.bg-grass {
+  background-image: url('../image/grass.jpg');
+  background-size: 15%;
+}
