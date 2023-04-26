@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blinkathon</title>
     <link href="/static/css/style.css" rel="stylesheet" />
+    <link href="/static/css/game.css" rel="stylesheet" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -18,6 +19,7 @@
       crossorigin="anonymous"
     ></script>
   </head>
+
   <body>
     <div class="bg-orange-400 p-5">
       <header>
@@ -28,21 +30,49 @@
         id="game-console"
         class="my-10 flex flex-col justify-center items-center"
       >
-        <p id="game-status">Press a button to start.</p>
+        <div class="container" id="container">
+          <div class="background">
+            <img id="road" src="/static/image/road.jpg" alt="" />
+            <div>
+              <img
+                id="car_1"
+                src="/static/image/car1.png"
+                style="display: none"
+              />
+            </div>
+            <div>
+              <img
+                id="car_2"
+                src="/static/image/car2.png"
+                style="display: none"
+              />
+            </div>
+          </div>
+        </div>
+        <br />
+        <p id="game-status" class="animation-blinker">Press a button to start.</p>
+        <!-- <button id="start-btn" class="btn-primary mt-2 text-black disabled:text-gray-400" disabled="true"
+        onclick="startGame()">
+        Start
+      </button> -->
+
         <button
           id="start-btn"
-          class="btn-primary mt-2 text-black disabled:text-gray-400"
-          disabled="true"
+          class="btn-primary mt-2 text-black"
           onclick="startGame()"
         >
           Start
         </button>
       </div>
       <div class="flex justify-between">
-        <p>Player 1<br/><span id="player1-blink-count">0</span> counts</p>
-        <p class="text-right">Player 2<br/><span id="player2-blink-count">0</span> counts</p>
+        <p>Player 1<br /><span id="player1-blink-count">0</span> counts</p>
+        <p class="text-right">
+          Player 2<br /><span id="player2-blink-count">0</span> counts
+        </p>
       </div>
-      <div class="max-w-[400px] mx-auto bg-slate-200 border border-slate-400 rounded-lg">
+      <div
+        class="max-w-[400px] mx-auto bg-slate-200 border border-slate-400 rounded-lg"
+      >
         <img
           id="live-camera"
           alt="Live Camera"
@@ -50,6 +80,7 @@
         />
       </div>
     </div>
+
     <footer>
       <p class="text-center text-sm px-5 py-2">
         <a href="/about" class="btn-primary"
@@ -57,10 +88,42 @@
         >
       </p>
     </footer>
+
+    <script>
+      const car1 = document.getElementById('car_1');
+      const car2 = document.getElementById('car_2');
+      const roadWidth = document.getElementById('road').clientWidth;
+      const carWidth = car1.clientWidth;
+
+      let car1Pos = 0;
+      let car2Pos = 0;
+      let counter1 = 0; // counter for player 1
+      let counter2 = 0; // counter for player 2
+      let speed = 8;
+      let winSound = new Audio('../static/sound/win.wav');
+      let bgMusic = new Audio('../static/sound/background.mp3');
+      // bgMusic.volume = 0.2; // set the volume to 50%
+      // winSound.volume = 0.3; // set the volume to 50%
+      bgMusic.loop = true;
+      bgMusic.play();
+
+      const player1 = 'P1';
+      const player2 = 'P2';
+
+      let end_or_not = true;
+
+      startBtn.addEventListener('click', () => {
+        startBtn.style.display = 'none';
+        countdownEl.style.display = 'block';
+        startCountdown();
+      });
+    </script>
+
     <script type="text/javascript" charset="utf-8">
       var videoPlayer = document.getElementById('live-camera');
       videoPlayer.src = '/video-feed';
     </script>
+
     <script type="text/javascript" charset="utf-8">
       var socket = io();
       socket.on('connect', function () {
@@ -70,37 +133,120 @@
       setInterval(() => {
         socket.emit('blinkathon-status');
       }, 1000);
+      setInterval(() => {
+        socket.emit('blinkathon-status');
+      }, 1000);
 
-      socket.on('game', function (game) {
-        console.log('game:', game);
-        const startBtn = document.getElementById('start-btn');
-        if (!!game.playable) {
-          startBtn.disabled = false;
-        } else {
-          startBtn.disabled = true;
-        }
-        const gameStatus = document.getElementById('game-status');
-        if (!!game.detecting) {
-          gameStatus.innerText = "Blink!"
-        }
+    socket.on('game', function (game) {
+      console.log('game:', game);
+      const startBtn = document.getElementById('start-btn');
+      const container = document.getElementById('container');
+      if (!!game.playable) {
+        startBtn.disabled = false;
+        container.disabled = true;
+      } else {
+        startBtn.disabled = true;
+        container.disabled = false;
+      }
+      const gameStatus = document.getElementById('game-status');
+      if (!!game.detecting) {
+        gameStatus.innerText = "Blink!"
+      }
 
+        const player1BlinkCount = document.getElementById(
+          'player1-blink-count'
+        );
+        player1BlinkCount.innerText = Math.min(game.players[0].blinkCount, 10);
+        const player2BlinkCount = document.getElementById(
+          'player2-blink-count'
+        );
+        player2BlinkCount.innerText = Math.min(game.players[1].blinkCount, 10);
+
+        myFunction(
+          game.players[0].blinkCount,
+          game.players[1].blinkCount,
+          end_or_not
+        );
+        // endgame(game.players[0].blinkCount, game.players[1].blinkCount, end_or_not)
+        // end_or_not = true;
+      });
         const player1BlinkCount = document.getElementById('player1-blink-count')
         player1BlinkCount.innerText = game.players[0].blinkCount
         const player2BlinkCount = document.getElementById('player2-blink-count')
         player2BlinkCount.innerText = game.players[1].blinkCount
       });
 
-      const startGame = () => {
-        const startBtn = document.getElementById('start-btn');
-        startBtn.style.display = "none"
-        socket.emit('start-game');
-        const gameStatus = document.getElementById('game-status');
-        gameStatus.innerText = "Calculating... - Please keep your eyes open."
-      };
+    function myFunction(pos1, pos2, end_or_not) {
+      car1.style.left = Math.min(pos1 * speed, 80) + "%";
+      car2.style.left = Math.min(pos2 * speed, 80) + "%";
 
+      if (pos1 >= 10 || pos2 >= 10) { // check if either player has reached 10
+        // document.removeEventListener("keydown", handleKeyDown);
+        
+        if (end_or_not == true) {
+          end_or_not = false;
+          const winner = document.createElement("p");
+          winner.setAttribute("id", "win");
+          winSound.play();
+          bgMusic.pause();
+          if (pos1 > pos2) { // check which player has moved farther
+            winner.textContent = `${player1} wins!`;
+          } else {
+            winner.textContent = `${player2} wins!`;
+          }
+          document.body.appendChild(winner);
+          winner.addEventListener('animationend', () => {
+            winSound.pause();
+          })
+        };
+      }
+
+    }
+
+
+    // function endgame(pos1, pos2, end_or_not){
+    //   if (end_or_not){
+    //     const winner = document.createElement("p");
+    //     winner.setAttribute("id", "win");
+    //     winSound.play();
+    //     bgMusic.pause();
+    //     if (pos1 > pos2) { // check which player has moved farther
+    //       winner.textContent = `${player1} wins!`;
+    //     } else {
+    //       winner.textContent = `${player2} wins!`;
+    //     }
+    //     document.body.appendChild(winner);
+    //     winner.addEventListener('animationend', () => {
+    //       winSound.pause();
+    //     })
+    //   }
+    // }
+    const startGame = () => {
+      const startBtn = document.getElementById('start-btn');
+      startBtn.style.display = "none"
+      socket.emit('start-game');
+      const gameStatus = document.getElementById('game-status');
+      gameStatus.innerText = "Calculating... - Please keep your eyes open."
+      const container = document.getElementById('container');
+      container.style.display = "block"
+      const car_1 = document.getElementById('car_1');
+      car_1.style.display = "block"
+      const car_2 = document.getElementById('car_2');
+      car_2.style.display = "block"
+
+    };
+
+      window.onbeforeunload = function () {
+        socket.emit('exit', { msg: 'Bye!' });
+      };
+    </script>
+
+    <script src="static/js/script.js"></script>
+  </body>
       window.onbeforeunload = function () {
         socket.emit('exit', { msg: 'Bye!' });
       };
     </script>
   </body>
 </html>
+

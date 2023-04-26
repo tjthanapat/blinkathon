@@ -42,6 +42,7 @@ class Blinkathon:
         return dict(
             playable=self.playable,
             detecting_blink=self.detecting_blink,
+            counting_blink=self.n_frames_detect_blink >= N_FRAMES_TO_CALC_EAR_THRESH,
             players=[
                 dict(blinkCount=self.blink_detectors[0].total_count),
                 dict(blinkCount=self.blink_detectors[1].total_count),
