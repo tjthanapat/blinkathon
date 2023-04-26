@@ -1,22 +1,18 @@
 from flask import Flask, session, render_template
 from flask_session import Session
 from flask_socketio import SocketIO, emit
-import cv2
-import numpy as np
 
 import dataurl_utilities as dataurl_utils
-
 from blinkathon import Blinkathon
 
 
 app = Flask(__name__)
-app.debug = True
 app.config["SECRET_KEY"] = "supersecret!"
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-socketio = SocketIO(app, manage_session=False)
+socketio = SocketIO(app)
 
 
 @socketio.on("connect")
@@ -42,6 +38,7 @@ def handle_stream(data):
         ),
     )
 
+
 @socketio.on("start-game")
 def handle_start_game():
     blinkathon = session.get("blinkathon")
@@ -66,6 +63,6 @@ def about():
     return render_template("about.html")
 
 
-
 if __name__ == "__main__":
+    app.debug = True
     socketio.run(app)
