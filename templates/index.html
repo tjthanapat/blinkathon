@@ -18,69 +18,55 @@
       integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
       crossorigin="anonymous"
     ></script>
+    <style>
+      img {
+        pointer-events: none;
+      }
+    </style>
   </head>
-
   <body>
-    <div class="bg-orange-400 p-5">
-      <header>
-        <h1 class="text-4xl">Blinkathon</h1>
-        <p>This is a super cool game.</p>
-      </header>
-      <div
-        id="game-console"
-        class="my-10 flex flex-col justify-center items-center"
-      >
-        <div class="container" id="container">
-          <div class="background">
-            <img id="road" src="/static/image/road.jpg" alt="" />
-            <div>
-              <img
-                id="car_1"
-                src="/static/image/car1.png"
-                style="display: none"
-              />
-            </div>
-            <div>
-              <img
-                id="car_2"
-                src="/static/image/car2.png"
-                style="display: none"
-              />
-            </div>
-          </div>
-        </div>
-        <br />
-        <p id="game-status" class="animation-blinker">Press a button to start.</p>
-        <!-- <button id="start-btn" class="btn-primary mt-2 text-black disabled:text-gray-400" disabled="true"
-        onclick="startGame()">
-        Start
-      </button> -->
-
-        <button
-          id="start-btn"
-          class="btn-primary mt-2 text-black"
-          onclick="startGame()"
-        >
-          Start
-        </button>
-      </div>
-      <div class="flex justify-between">
+    
+    <header class="px-5 py-7 text-center text-white bg-slate-800 relative">
+      <h1 class="text-4xl">Blinkathon</h1>
+      <p class="text-sm">This is a super cool game.</p>
+      <p id="game-status" class="mt-5 animation-blinker">Press a button to start.</p>
+      <div id="blink-counters" class="flex justify-between absolute inset-0 w-full p-5 text-white">
         <p>Player 1<br /><span id="player1-blink-count">0</span> counts</p>
         <p class="text-right">
           Player 2<br /><span id="player2-blink-count">0</span> counts
         </p>
       </div>
-      <div
-        class="max-w-[400px] mx-auto bg-slate-200 border border-slate-400 rounded-lg"
-      >
-        <img
-          id="live-camera"
-          alt="Live Camera"
-          class="w-full h-full object-cover rounded-lg"
-        />
+    </header>
+    <div id="game-console">
+      <div id="game-graphic" class="relative">
+        <img id="road" src="/static/image/road.jpg" alt="" />
+        <div class="absolute h-full w-[80%] inset-0">
+          <div class="relative h-full">
+            <img
+              id="car-1"
+              src="/static/image/car1.png"
+              style="display: none"
+            />
+            <img
+              id="car-2"
+              src="/static/image/car2.png"
+              style="display: none"
+            />
+          </div>
+        </div>
       </div>
+      
+      <button
+        id="start-btn"
+        class="btn-primary mt-2 text-black disabled:text-gray-400"
+        disabled="true"
+        onclick="startGame()"
+      >
+        Start
+      </button>
+      
+      <img id="server-live" class="pointer-events-none" />
     </div>
-
     <footer>
       <p class="text-center text-sm px-5 py-2">
         <a href="/about" class="btn-primary"
@@ -89,164 +75,12 @@
       </p>
     </footer>
 
-    <script>
-      const car1 = document.getElementById('car_1');
-      const car2 = document.getElementById('car_2');
-      const roadWidth = document.getElementById('road').clientWidth;
-      const carWidth = car1.clientWidth;
+    <p>Live Camera on Client</p>
+    <video id="live-camera" autoplay></video>
+    <p>Realtime Frame Sent</p>
+    <canvas id="live-camera-preview"></canvas>
+    <p>Realtime Frame Recieved from Server</p>
 
-      let car1Pos = 0;
-      let car2Pos = 0;
-      let counter1 = 0; // counter for player 1
-      let counter2 = 0; // counter for player 2
-      let speed = 8;
-      let winSound = new Audio('../static/sound/win.wav');
-      let bgMusic = new Audio('../static/sound/background.mp3');
-      // bgMusic.volume = 0.2; // set the volume to 50%
-      // winSound.volume = 0.3; // set the volume to 50%
-      bgMusic.loop = true;
-      bgMusic.play();
-
-      const player1 = 'P1';
-      const player2 = 'P2';
-
-      let end_or_not = true;
-
-      startBtn.addEventListener('click', () => {
-        startBtn.style.display = 'none';
-        countdownEl.style.display = 'block';
-        startCountdown();
-      });
-    </script>
-
-    <script type="text/javascript" charset="utf-8">
-      var videoPlayer = document.getElementById('live-camera');
-      videoPlayer.src = '/video-feed';
-    </script>
-
-    <script type="text/javascript" charset="utf-8">
-      var socket = io();
-      socket.on('connect', function () {
-        console.log('connected!');
-      });
-
-      setInterval(() => {
-        socket.emit('blinkathon-status');
-      }, 1000);
-      setInterval(() => {
-        socket.emit('blinkathon-status');
-      }, 1000);
-
-    socket.on('game', function (game) {
-      console.log('game:', game);
-      const startBtn = document.getElementById('start-btn');
-      const container = document.getElementById('container');
-      if (!!game.playable) {
-        startBtn.disabled = false;
-        container.disabled = true;
-      } else {
-        startBtn.disabled = true;
-        container.disabled = false;
-      }
-      const gameStatus = document.getElementById('game-status');
-      if (!!game.detecting) {
-        gameStatus.innerText = "Blink!"
-      }
-
-        const player1BlinkCount = document.getElementById(
-          'player1-blink-count'
-        );
-        player1BlinkCount.innerText = Math.min(game.players[0].blinkCount, 10);
-        const player2BlinkCount = document.getElementById(
-          'player2-blink-count'
-        );
-        player2BlinkCount.innerText = Math.min(game.players[1].blinkCount, 10);
-
-        myFunction(
-          game.players[0].blinkCount,
-          game.players[1].blinkCount,
-          end_or_not
-        );
-        // endgame(game.players[0].blinkCount, game.players[1].blinkCount, end_or_not)
-        // end_or_not = true;
-      });
-        const player1BlinkCount = document.getElementById('player1-blink-count')
-        player1BlinkCount.innerText = game.players[0].blinkCount
-        const player2BlinkCount = document.getElementById('player2-blink-count')
-        player2BlinkCount.innerText = game.players[1].blinkCount
-      });
-
-    function myFunction(pos1, pos2, end_or_not) {
-      car1.style.left = Math.min(pos1 * speed, 80) + "%";
-      car2.style.left = Math.min(pos2 * speed, 80) + "%";
-
-      if (pos1 >= 10 || pos2 >= 10) { // check if either player has reached 10
-        // document.removeEventListener("keydown", handleKeyDown);
-        
-        if (end_or_not == true) {
-          end_or_not = false;
-          const winner = document.createElement("p");
-          winner.setAttribute("id", "win");
-          winSound.play();
-          bgMusic.pause();
-          if (pos1 > pos2) { // check which player has moved farther
-            winner.textContent = `${player1} wins!`;
-          } else {
-            winner.textContent = `${player2} wins!`;
-          }
-          document.body.appendChild(winner);
-          winner.addEventListener('animationend', () => {
-            winSound.pause();
-          })
-        };
-      }
-
-    }
-
-
-    // function endgame(pos1, pos2, end_or_not){
-    //   if (end_or_not){
-    //     const winner = document.createElement("p");
-    //     winner.setAttribute("id", "win");
-    //     winSound.play();
-    //     bgMusic.pause();
-    //     if (pos1 > pos2) { // check which player has moved farther
-    //       winner.textContent = `${player1} wins!`;
-    //     } else {
-    //       winner.textContent = `${player2} wins!`;
-    //     }
-    //     document.body.appendChild(winner);
-    //     winner.addEventListener('animationend', () => {
-    //       winSound.pause();
-    //     })
-    //   }
-    // }
-    const startGame = () => {
-      const startBtn = document.getElementById('start-btn');
-      startBtn.style.display = "none"
-      socket.emit('start-game');
-      const gameStatus = document.getElementById('game-status');
-      gameStatus.innerText = "Calculating... - Please keep your eyes open."
-      const container = document.getElementById('container');
-      container.style.display = "block"
-      const car_1 = document.getElementById('car_1');
-      car_1.style.display = "block"
-      const car_2 = document.getElementById('car_2');
-      car_2.style.display = "block"
-
-    };
-
-      window.onbeforeunload = function () {
-        socket.emit('exit', { msg: 'Bye!' });
-      };
-    </script>
-
-    <script src="static/js/script.js"></script>
-  </body>
-      window.onbeforeunload = function () {
-        socket.emit('exit', { msg: 'Bye!' });
-      };
-    </script>
+    <script src="/static/js/script.js" type="text/javascript"></script>
   </body>
 </html>
-
