@@ -34,7 +34,7 @@ setInterval(() => {
   const frameData = canvas.toDataURL('image/jpeg');
   socket.emit('stream', frameData);
   console.log('sent frame!');
-}, 500);
+}, VIDEOSTREAM);
 
 
 const startBtn = document.getElementById('start-btn');
