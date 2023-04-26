@@ -4,6 +4,7 @@ from typing import Tuple, List
 import dlib
 from imutils import face_utils
 import face_recognition_models
+import blink_utilities as blink_utils
 
 
 frontal_face_detector = dlib.get_frontal_face_detector()
@@ -37,36 +38,43 @@ class BlinkDetector:
         self.ear_thresh = DEFAULT_EYE_AR_THRESH
         self.total_count = 0
         self.consec_frame_count = 0
-        self.first_n_eye_landmarks = list()
+        self.first_n_eye_landmarks = list(
+            [[[], [], [], [], [], []], [[], [], [], [], [], []]])
 
     def store_first_n_eye_landmarks(self, eye_landmarks):
-        self.first_n_eye_landmarks.append(eye_landmarks)
+        for i in range(2):
+            for j in range(6):
+                self.first_n_eye_landmarks[i][j].append(eye_landmarks[i][j])
+        # self.first_n_eye_landmarks.append(eye_landmarks)
 
     def calculate_ear_thresh(
         self,
-        eye_landmarks: Tuple[np.ndarray, np.ndarray],
+        eye_landmarks: list([[[], [], [], [], [], []], [[], [], [], [], [], []]]),
     ):
-        ### Calculate adaptive threshold here
-        ### Define required functions in blink_utils
-        left_eye, right_eye = eye_landmarks
-        new_ear_thresh = 0.5
+        # Calculate adaptive threshold here
+        # Define required functions in blink_utils
+        left_eye = eye_landmarks[0]
+        right_eye = eye_landmarks[1]
+        left_eye_mEAR = blink_utils.cal_mEAR(left_eye)
+        right_eye_mEAR = blink_utils.cal_mEAR(right_eye)
+        new_ear_thresh = (left_eye_mEAR+right_eye_mEAR)/2
         self.ear_thresh = new_ear_thresh
 
     def detect_blink(
         self,
-        eye_landmarks: Tuple[np.ndarray, np.ndarray],
+        eye_landmarks: list([[[], [], [], [], [], []], [[], [], [], [], [], []]]),
     ):
-        ### Calculate ear score here
-        ### Define required functions in blink_utils
+        # Calculate ear score here
+        # Define required functions in blink_utils
         left_eye, right_eye = eye_landmarks
-        ear_score = np.random.uniform()
-        if ear_score >= self.ear_thresh:
+        left_eye_EAR = blink_utils.cal_EAR(left_eye)
+        right_eye_EAR = blink_utils.cal_EAR(right_eye)
+        ear_score = (left_eye_EAR+right_eye_EAR)/2
+        if ear_score <= self.ear_thresh:
             self.consec_frame_count += 1
         else:
+            if self.consec_frame_count >= EYE_AR_CONSEC_FRAMES:
+                self.total_count += 1
             self.consec_frame_count = 0
-        
-        if self.consec_frame_count == EYE_AR_CONSEC_FRAMES:
-            self.total_count += 1
-            self.consec_frame_count = 0
-        
+
         return ear_score
