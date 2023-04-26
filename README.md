@@ -1,6 +1,10 @@
 # Blinkathon
 Blinkathon is a blink racing game.
 
+by
+- Thanapat Teerattanayu
+- Napong Pipatbowornkul
+- Sira Attawanich
 
 # Requirement
 Python and python packages in `requirements.txt`
@@ -9,5 +13,5 @@ Python and python packages in `requirements.txt`
 Run `app.py`.
 
 # Styling with TailwindCSS
-NodeJS is required for installation and building a css file. 
+NodeJS is required for building a css file. 
 To build css file, run `npx tailwindcss -i ./src/input.css -o ./static/css/style.css --watch`
