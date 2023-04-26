@@ -15,7 +15,7 @@ navigator.mediaDevices
     video.srcObject = stream;
   })
   .catch((err) => {
-    alert('Cannot access webcam.');
+    alert('Cannot access your webcam.');
     console.error(err);
   });
 
@@ -33,8 +33,6 @@ setInterval(() => {
   console.log('sent frame!');
 }, 500);
 
-
-
 const gameStatus = document.getElementById('game-status');
 const car1 = document.getElementById('car-1');
 const car2 = document.getElementById('car-2');
@@ -42,7 +40,7 @@ const roadWidth = document.getElementById('road').clientWidth;
 const carWidth = car1.clientWidth;
 
 // Set goal here!!
-const limitBlink = 3
+const limitBlink = 1;
 
 const player1 = 'P1';
 const player2 = 'P2';
@@ -74,22 +72,44 @@ socket.on('blinkathon', (game) => {
   const gameStatus = document.getElementById('game-status');
   if (!!game.counting_blink) {
     gameStatus.innerText = 'Blink!';
+    const player1BlinkCount = document.getElementById('player1-blink-count');
+    player1BlinkCount.innerText = Math.min(
+      game.players[0].blinkCount,
+      limitBlink
+    );
+    const player2BlinkCount = document.getElementById('player2-blink-count');
+    player2BlinkCount.innerText = Math.min(
+      game.players[1].blinkCount,
+      limitBlink
+    );
+    moveCars(game.players[0].blinkCount, game.players[1].blinkCount);
+    if (game.players[0].blinkCount == limitBlink) {
+      gameStatus.innerText = 'P1 wins';
+      socket.emit('end-game');
+      // alert('P1 wins');
+    } else if (game.players[1].blinkCount == limitBlink) {
+      gameStatus.innerText = 'P2 wins';
+      socket.emit('end-game');
+      // alert('P2 wins');
+    }
+  } else if (!!game.detecting_blink) {
+    gameStatus.innerText = 'Calculating... - Please keep your eyes open.';
   }
-  
-  const player1BlinkCount = document.getElementById('player1-blink-count');
-  player1BlinkCount.innerText = Math.min(game.players[0].blinkCount, limitBlink);
-  const player2BlinkCount = document.getElementById('player2-blink-count');
-  player2BlinkCount.innerText = Math.min(game.players[1].blinkCount, limitBlink);
 
-  moveCars(game.players[0].blinkCount, game.players[1].blinkCount)
+
+  
 });
 
+const winner = (player) => {
+  gameStatus.innerText = player;
+};
+
 const moveCars = (blinkCount1, blinkCount2) => {
-  const car1pos = Math.min(blinkCount1 / limitBlink, 1) *100
-  car1.style.left = `${car1pos}%`
-  const car2pos = Math.min(blinkCount2 / limitBlink, 1) *100
-  car2.style.left = `${car2pos}%`
-}
+  const car1pos = Math.min(blinkCount1 / limitBlink, 1) * 100;
+  car1.style.left = `${car1pos}%`;
+  const car2pos = Math.min(blinkCount2 / limitBlink, 1) * 100;
+  car2.style.left = `${car2pos}%`;
+};
 
 // function myFunction(pos1, pos2, end_or_not) {
 //   car1.style.left = Math.min(pos1 * speed, 80) + '%';
@@ -118,7 +138,6 @@ const moveCars = (blinkCount1, blinkCount2) => {
 //     }
 //   }
 // }
-
 
 // socket.on('game', function (game) {
 //   console.log('game:', game);
@@ -149,8 +168,6 @@ const moveCars = (blinkCount1, blinkCount2) => {
 //   // endgame(game.players[0].blinkCount, game.players[1].blinkCount, end_or_not)
 //   // end_or_not = true;
 // });
-
-
 
 // let winSound = new Audio('../static/sound/win.wav');
 // let bgMusic = new Audio('../static/sound/background.mp3');

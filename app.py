@@ -52,7 +52,7 @@ def handle_start_game():
 @socketio.on("end-game")
 def handle_end_game():
     blinkathon = session.get("blinkathon")
-    blinkathon = blinkathon.start_detect_blink()
+    blinkathon = blinkathon.stop_detect_blink()
     session["blinkathon"] = blinkathon 
 
 

@@ -36,6 +36,7 @@ class Blinkathon:
             BlinkDetector(),
         ]
         self.n_frames_detect_blink = 0
+        print("stop detect blink")
         return self
 
     def get_status(self) -> dict:
