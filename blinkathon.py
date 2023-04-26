@@ -59,7 +59,7 @@ class Blinkathon:
                 tracker = blink_utils.OPENCV_OBJECT_TRACKERS["mosse"]()
                 self.trackers.add(tracker, frame, bb)
 
-        self.playable = len(rects) >= 1
+        self.playable = len(rects) >= 2
         
         (success, boxes) = self.trackers.update(frame)
 
