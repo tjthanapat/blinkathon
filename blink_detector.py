@@ -49,10 +49,10 @@ class BlinkDetector:
 
     def calculate_ear_thresh(
         self,
-        eye_landmarks: list([[[], [], [], [], [], []], [[], [], [], [], [], []]]),
     ):
         # Calculate adaptive threshold here
         # Define required functions in blink_utils
+        eye_landmarks = self.first_n_eye_landmarks
         left_eye = eye_landmarks[0]
         right_eye = eye_landmarks[1]
         left_eye_mEAR = blink_utils.cal_mEAR(left_eye)

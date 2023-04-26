@@ -9,13 +9,12 @@ colors = [(0, 255, 0), (0, 100, 255)]
 
 detecting_blink = False
 
-n_frames_detect_blink = 0
-N_FRAMES_TO_CALC_EAR_THRESH = 5
+N_FRAMES_TO_CALC_EAR_THRESH = 90
 
 
 class Blinkathon:
     def __init__(self) -> None:
-        # self.trackers = cv2.legacy.MultiTracker_create()
+        self.trackers = cv2.legacy.MultiTracker_create()
         self.rects = None
         self.blink_detectors = [
             BlinkDetector(),
@@ -23,7 +22,6 @@ class Blinkathon:
         ]
         self.playable = False
         self.detecting_blink = False
-        self.n_frames_detect_blink = 0
 
     def start_detect_blink(self):
         self.detecting_blink = True
@@ -35,15 +33,14 @@ class Blinkathon:
             BlinkDetector(),
             BlinkDetector(),
         ]
-        self.n_frames_detect_blink = 0
-        print("stop detect blink")
         return self
 
     def get_status(self) -> dict:
         return dict(
             playable=self.playable,
-            detecting_blink=self.detecting_blink,
-            counting_blink=self.n_frames_detect_blink >= N_FRAMES_TO_CALC_EAR_THRESH,
+            detecting_blink=self.detecting_blink, # กด start
+            counting_blink=(len(self.blink_detectors[0].first_n_eye_landmarks[0][0]) >= N_FRAMES_TO_CALC_EAR_THRESH) and \
+                (len(self.blink_detectors[1].first_n_eye_landmarks[0][0]) >= N_FRAMES_TO_CALC_EAR_THRESH), # เริ่มกระพริบ
             players=[
                 dict(blinkCount=self.blink_detectors[0].total_count),
                 dict(blinkCount=self.blink_detectors[1].total_count),
@@ -55,70 +52,78 @@ class Blinkathon:
         rects = detect_faces(gray)
 
         ### Implement face tracking here.
+        if (len(rects) == 0) or (len(self.trackers.getObjects()) < len(rects)):
+            self.trackers = cv2.legacy.MultiTracker_create()
+            for rect in rects:
+                bb = blink_utils.convert_rect_to_bb(rect)
+                tracker = blink_utils.OPENCV_OBJECT_TRACKERS["mosse"]()
+                self.trackers.add(tracker, frame, bb)
 
         self.playable = len(rects) >= 1
+        
+        (success, boxes) = self.trackers.update(frame)
 
-        if self.detecting_blink:
-            self.n_frames_detect_blink += 1
-        else:
-            self.n_frames_detect_blink = 0
-
-        for i, rect in enumerate(rects):
-            x, y, w, h = blink_utils.convert_rect_to_bb(rect)
-            color = colors[i] if i < 2 else (220, 220, 220)
-            cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-            cv2.putText(
-                frame,
-                f"P{i+1}" if i < 2 else f"NPC {i-1}",
-                ((x + round(0.4 * w)), (y - 20)),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                color,
-                2,
-            )
-
-            if i < 2:
-                blink_detector = self.blink_detectors[i]
+        if success:
+            for i, box in enumerate(boxes):
+                (x, y, w, h) = [int(v) for v in box]
+                # x, y, w, h = blink_utils.convert_rect_to_bb(rect)
+                color = colors[i] if i < 2 else (220, 220, 220)
+                cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
                 cv2.putText(
                     frame,
-                    f"THRESH: {blink_detector.ear_thresh}",
-                    ((x + 5), (y + 15)),
+                    f"P{i+1}" if i < 2 else f"NPC {i-1}",
+                    ((x + round(0.4 * w)), (y - 20)),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    0.4,
+                    0.7,
                     color,
-                    1,
+                    2,
                 )
-                if self.detecting_blink:
-                    landmarks = predict_landmarks(
+
+                if i < 2:
+                    blink_detector = self.blink_detectors[i]
+                    cv2.putText(
                         frame,
-                        blink_utils.convert_bb_to_rect((x, y, w, h)),
-                    )
-                    eye_landmarks = (
-                        landmarks[42:48],  # left_eye
-                        landmarks[36:42],  # right_eye
-                    )
-                    blink_utils.draw_eye_landmarks(
-                        frame,
-                        eye_landmarks,
+                        f"THRESH: {blink_detector.ear_thresh}",
+                        ((x + 5), (y + 15)),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.4,
                         color,
+                        1,
                     )
-                    ### Modify EAR calculation here.
-                    if self.n_frames_detect_blink <= N_FRAMES_TO_CALC_EAR_THRESH:
-                        if n_frames_detect_blink == N_FRAMES_TO_CALC_EAR_THRESH:
-                            blink_detector.calculate_ear_thresh(eye_landmarks)
-                        else:
-                            blink_detector.store_first_n_eye_landmarks(eye_landmarks)
-                    else:
-                        ear_score = blink_detector.detect_blink(eye_landmarks)
-                        cv2.putText(
+                    if self.detecting_blink:
+                        landmarks = predict_landmarks(
                             frame,
-                            f"EAR: {ear_score:.2f} | Count: {blink_detector.total_count}",
-                            ((x + 5), (y + 30)),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.4,
-                            color,
-                            1,
+                            blink_utils.convert_bb_to_rect((x, y, w, h))
+                            # blink_utils.convert_bb_to_rect((x, y, w, h)),
                         )
+                        eye_landmarks = (
+                            landmarks[42:48],  # left_eye
+                            landmarks[36:42],  # right_eye
+                        )
+                        blink_utils.draw_eye_landmarks(
+                            frame,
+                            eye_landmarks,
+                            color,
+                        )
+                        ### Modify EAR calculation here.
+                        n_frames_detect_blink = len(blink_detector.first_n_eye_landmarks[0][0])
+                        if n_frames_detect_blink <= N_FRAMES_TO_CALC_EAR_THRESH:
+                            if n_frames_detect_blink == N_FRAMES_TO_CALC_EAR_THRESH:
+                                blink_detector.store_first_n_eye_landmarks(eye_landmarks)
+                                blink_detector.calculate_ear_thresh()
+                            else:
+                                blink_detector.store_first_n_eye_landmarks(eye_landmarks)
+                        else:
+                            ear_score = blink_detector.detect_blink(eye_landmarks)
+                            cv2.putText(
+                                frame,
+                                f"EAR: {ear_score:.2f} | Count: {blink_detector.total_count}",
+                                ((x + 5), (y + 30)),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.4,
+                                color,
+                                1,
+                            )
 
         return self, frame
 
