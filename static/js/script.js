@@ -23,18 +23,31 @@ socket.on('connect', () => {
   console.log('connected!');
 });
 
-// draw video on canvas and convert to data url 
+// draw video on canvas and convert to data url
 // then send to server every n ms.
 setInterval(() => {
   context.drawImage(video, 0, 0, context.width, context.height);
   const frameData = canvas.toDataURL('image/jpeg');
-  socket.emit('stream', frameData)
-  console.log('sent frame!')
-}, 1000);
+  socket.emit('stream', frameData);
+  console.log('sent frame!');
+}, 500);
 
-const serverLive = document.getElementById("server-live")
+const serverLive = document.getElementById('server-live');
 
-socket.on('blinkathon', (game) =>{
-  console.log(game)
-  serverLive.src = game.frame
-} )
+socket.on('blinkathon', (game) => {
+  console.log(game);
+  serverLive.src = game.frame;
+
+  const startBtn = document.getElementById('start-btn');
+  if (!!game.playable) {
+    startBtn.disabled = false;
+  } else {
+    startBtn.disabled = true;
+  }
+});
+
+
+const startGame = () => {
+  console.log('start clicked')
+  socket.emit('start-game');
+}
