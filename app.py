@@ -1,6 +1,10 @@
-from flask import Flask, Response, render_template
+from flask import Flask, session, render_template
+from flask_session import Session
 from flask_socketio import SocketIO, emit
 import cv2
+import numpy as np
+
+import dataurl_utilities as dataurl_utils
 
 from blinkathon import Blinkathon
 
@@ -8,22 +12,55 @@ from blinkathon import Blinkathon
 app = Flask(__name__)
 app.debug = True
 app.config["SECRET_KEY"] = "supersecret!"
-socketio = SocketIO(app)
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_TYPE"] = "filesystem"
+Session(app)
 
-cap = cv2.VideoCapture(0)
-blinkathon = Blinkathon(cap)
+socketio = SocketIO(app, manage_session=False)
+
+# cap = cv2.VideoCapture(0)
+# blinkathon = Blinkathon(cap)
 
 
 @socketio.on("connect")
 def handle_connect():
-    global blinkathon
-    print("server and client connected")
-    blinkathon.stop_detect_blinks()
+    print("client connected")
+    session["blinkathon"] = Blinkathon()
 
 
-@socketio.on("blinkathon-status")
-def handle_blinkathon_status():
-    emit("game", blinkathon.status)
+@socketio.on("stream")
+def handle_stream(data):
+    frame = dataurl_utils.decode_dataurl_to_frame(data)
+    blinkathon = session.get("blinkathon")
+    blinkathon, frame = blinkathon.process_frame(frame)
+    session["blinkathon"] = blinkathon
+    game_status = blinkathon.get_status()
+    frame_encoded = dataurl_utils.encode_frame(frame)
+    emit(
+        "blinkathon",
+        dict(
+            message="sent from server!!",
+            frame=frame_encoded,
+            **game_status
+        ),
+    )
+
+@socketio.on("start-game")
+def handle_start_game():
+    blinkathon = session.get("blinkathon")
+    blinkathon = blinkathon.start_detect_blink()
+    session["blinkathon"] = blinkathon
+
+
+@socketio.on("end-game")
+def handle_end_game():
+    blinkathon = session.get("blinkathon")
+    blinkathon = blinkathon.start_detect_blink()
+    session["blinkathon"] = blinkathon 
+
+# @socketio.on("blinkathon-status")
+# def handle_blinkathon_status():
+#     emit("game", blinkathon.status)
 
 
 @socketio.on("exit")
@@ -31,27 +68,18 @@ def handle_exit():
     print("User exited the game.")
 
 
-@socketio.on("start-game")
-def handle_start_game():
-    blinkathon.start_detect_blinks()
+
 
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index2.html")
 
 
 @app.route("/about")
 def about():
     return render_template("about.html")
 
-
-@app.route("/video-feed")
-def video_feed():
-    return Response(
-        blinkathon.generate_frames(),
-        mimetype="multipart/x-mixed-replace; boundary=frame",
-    )
 
 
 if __name__ == "__main__":
