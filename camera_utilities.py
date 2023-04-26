@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import imutils
 
 
 def read_video_capture(
@@ -25,7 +24,6 @@ def read_video_capture(
         raise Exception("Cannot read a frame from video capture.")
     if horizontal_flip:
         frame = cv2.flip(frame, 1)
-    frame = imutils.resize(frame, width=800)
     return frame
 
 
