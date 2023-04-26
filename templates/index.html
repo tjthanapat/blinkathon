@@ -34,10 +34,10 @@
         <div class="background">
           <img id="road" src="/static/image/road.jpg" alt="">
           <div>
-            <img id="car_1" src="/static/image/car1.png"  style="display: none;">
+            <img id="car_1" src="/static/image/car1.png" style="display: none;">
           </div>
           <div>
-            <img id="car_2" src="/static/image/car2.png"  style="display: none;">
+            <img id="car_2" src="/static/image/car2.png" style="display: none;">
           </div>
         </div>
       </div>
@@ -79,72 +79,74 @@
     let counter1 = 0; // counter for player 1
     let counter2 = 0; // counter for player 2
     let speed = 8;
-    let winSound = new Audio('/static/sound/win.wav');
-    let bgMusic = new Audio('/static/sound/background.mp3');
-    bgMusic.volume = 0.2; // set the volume to 50%
-    winSound.volume = 0.3; // set the volume to 50%
+    let winSound = new Audio('../static/sound/win.wav');
+    let bgMusic = new Audio('../static/sound/background.mp3');
+    // bgMusic.volume = 0.2; // set the volume to 50%
+    // winSound.volume = 0.3; // set the volume to 50%
     bgMusic.loop = true;
     bgMusic.play();
 
     const player1 = "P1";
     const player2 = "P2";
 
+    let end_or_not = true;
+
     // const handleKeyDown = (event) => {
 
-      if (event.key === "ArrowLeft") {
-        car1Pos = Math.max(car1Pos + speed, 0);
-        car1.style.left = car1Pos + "%";
-        counter1++; // increment counter for player 1
-      } else if (event.key === "ArrowRight") {
-        car2Pos = Math.max(car2Pos + speed, 0);
-        car2.style.left = car2Pos + "%";
-        counter2++; // increment counter for player 2
-      }
+    // if (event.key === "ArrowLeft") {
+    //   car1Pos = Math.max(car1Pos + speed, 0);
+    //   car1.style.left = car1Pos + "%";
+    //   counter1++; // increment counter for player 1
+    // } else if (event.key === "ArrowRight") {
+    //   car2Pos = Math.max(car2Pos + speed, 0);
+    //   car2.style.left = car2Pos + "%";
+    //   counter2++; // increment counter for player 2
+    // }
 
-      if (counter1 >= 10 || counter2 >= 10) { // check if either player has reached 10
-        document.removeEventListener("keydown", handleKeyDown);
-        const winner = document.createElement("p");
-        winner.setAttribute("id", "win");
-        winSound.play();
-        bgMusic.pause();
-        if (counter1 > counter2) { // check which player has moved farther
-          winner.textContent = `${player1} wins!`;
-        } else {
-          winner.textContent = `${player2} wins!`;
-        }
-        document.body.appendChild(winner);
-        winner.addEventListener('animationend', () => {
-          winSound.pause();
-        })
-      };
+    // if (counter1 >= 10 || counter2 >= 10) { // check if either player has reached 10
+    //   document.removeEventListener("keydown", handleKeyDown);
+    //   const winner = document.createElement("p");
+    //   winner.setAttribute("id", "win");
+    //   winSound.play();
+    //   bgMusic.pause();
+    //   if (counter1 > counter2) { // check which player has moved farther
+    //     winner.textContent = `${player1} wins!`;
+    //   } else {
+    //     winner.textContent = `${player2} wins!`;
+    //   }
+    //   document.body.appendChild(winner);
+    //   winner.addEventListener('animationend', () => {
+    //     winSound.pause();
+    //   })
+    // };
 
-    document.addEventListener("keydown", handleKeyDown);
+    // document.addEventListener("keydown", handleKeyDown);
 
-    const countdownEl = document.getElementById("countdown");
-    const startBtn = document.getElementById("start-btn");
-    const gameContainer = document.getElementById("game-container");
+    // const countdownEl = document.getElementById("countdown");
+    // const startBtn = document.getElementById("start-btn");
+    // const gameContainer = document.getElementById("game-container");
 
-    // hide the game container initially
-    gameContainer.style.display = "none";
+    // // hide the game container initially
+    // gameContainer.style.display = "none";
 
-    // function to start the countdown
-    const startCountdown = () => {
-      let count = 3;
-      countdownEl.textContent = count;
-      const intervalId = setInterval(() => {
-        count--;
-        if (count === 0) {
-          countdownEl.textContent = "Go!";
-          clearInterval(intervalId);
-          setTimeout(() => {
-            countdownEl.style.display = "none";
-            gameContainer.style.display = "block";
-          }, 500);
-        } else {
-          countdownEl.textContent = count;
-        }
-      }, 1000);
-    };
+    // // function to start the countdown
+    // const startCountdown = () => {
+    //   let count = 3;
+    //   countdownEl.textContent = count;
+    //   const intervalId = setInterval(() => {
+    //     count--;
+    //     if (count === 0) {
+    //       countdownEl.textContent = "Go!";
+    //       clearInterval(intervalId);
+    //       setTimeout(() => {
+    //         countdownEl.style.display = "none";
+    //         gameContainer.style.display = "block";
+    //       }, 500);
+    //     } else {
+    //       countdownEl.textContent = count;
+    //     }
+    //   }, 1000);
+    // };
 
     startBtn.addEventListener("click", () => {
       startBtn.style.display = "none";
@@ -185,25 +187,61 @@
       }
 
       const player1BlinkCount = document.getElementById('player1-blink-count')
-      player1BlinkCount.innerText = game.players[0].blinkCount
+      player1BlinkCount.innerText = Math.min(game.players[0].blinkCount, 10)
       const player2BlinkCount = document.getElementById('player2-blink-count')
-      player2BlinkCount.innerText = game.players[1].blinkCount
-      
-      car1Pos = Math.max(car1Pos + game.players[0].blinkCount, 0);
-      car1.style.left = car1Pos + "%";
-      counter1++;
-      car2Pos = Math.max(car2Pos + game.players[1].blinkCount, 0);
-      car2.style.left = car2Pos + "%";
-      counter2++; // increment counter for player 2
-      // car1Pos = Math.max(player1BlinkCount + speed, 0);
-      // car1.style.left = car1Pos + "%";
-      // counter1++; // increment counter for player 1
+      player2BlinkCount.innerText = Math.min(game.players[1].blinkCount, 10)
 
-      // car2Pos = Math.max(player2BlinkCount + speed, 0);
-      // car2.style.left = car2Pos + "%";
-      // counter1++; // increment counter for player 1
+      myFunction(game.players[0].blinkCount, game.players[1].blinkCount, end_or_not)
+      // endgame(game.players[0].blinkCount, game.players[1].blinkCount, end_or_not)
+      // end_or_not = true;
+
     });
 
+    function myFunction(pos1, pos2, end_or_not) {
+      car1.style.left = Math.min(pos1 * speed, 80) + "%";
+      car2.style.left = Math.min(pos2 * speed, 80) + "%";
+
+      if (pos1 >= 10 || pos2 >= 10) { // check if either player has reached 10
+        // document.removeEventListener("keydown", handleKeyDown);
+        
+        if (end_or_not == true) {
+          end_or_not = false;
+          const winner = document.createElement("p");
+          winner.setAttribute("id", "win");
+          winSound.play();
+          bgMusic.pause();
+          if (pos1 > pos2) { // check which player has moved farther
+            winner.textContent = `${player1} wins!`;
+          } else {
+            winner.textContent = `${player2} wins!`;
+          }
+          document.body.appendChild(winner);
+          winner.addEventListener('animationend', () => {
+            winSound.pause();
+          })
+        };
+      }
+
+    }
+
+
+    // function endgame(pos1, pos2, end_or_not){
+    //   if (end_or_not){
+    //     const winner = document.createElement("p");
+    //     winner.setAttribute("id", "win");
+    //     winSound.play();
+    //     bgMusic.pause();
+    //     if (pos1 > pos2) { // check which player has moved farther
+    //       winner.textContent = `${player1} wins!`;
+    //     } else {
+    //       winner.textContent = `${player2} wins!`;
+    //     }
+    //     document.body.appendChild(winner);
+    //     winner.addEventListener('animationend', () => {
+    //       winSound.pause();
+    //     })
+    //   }
+    // }
     const startGame = () => {
       const startBtn = document.getElementById('start-btn');
       startBtn.style.display = "none"
