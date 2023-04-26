@@ -14,21 +14,6 @@
   left: 0%;
 }
 
-/* Styles for winning message */
-#win {
-  font-size: 2rem;
-  color: white;
-  text-align: center;
-  position: absolute;
-  top: 15%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: rgba(0, 0, 0, 0.5);
-  padding: 20px;
-  border-radius: 10px;
-}
-
-
 .animation-blinker {
   animation: blinker 0.9s step-start infinite;
 }
@@ -39,12 +24,4 @@
   }
 }
 
-/* .animation-blinker {
-  animation: blinker 1s linear infinite;
-}
 
-@keyframes blinker {
-  50% {
-    opacity: 0;
-  }
-} */
