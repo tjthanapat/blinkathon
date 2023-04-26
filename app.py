@@ -18,9 +18,6 @@ Session(app)
 
 socketio = SocketIO(app, manage_session=False)
 
-# cap = cv2.VideoCapture(0)
-# blinkathon = Blinkathon(cap)
-
 
 @socketio.on("connect")
 def handle_connect():
@@ -57,18 +54,6 @@ def handle_end_game():
     blinkathon = session.get("blinkathon")
     blinkathon = blinkathon.start_detect_blink()
     session["blinkathon"] = blinkathon 
-
-# @socketio.on("blinkathon-status")
-# def handle_blinkathon_status():
-#     emit("game", blinkathon.status)
-
-
-@socketio.on("exit")
-def handle_exit():
-    print("User exited the game.")
-
-
-
 
 
 @app.route("/")

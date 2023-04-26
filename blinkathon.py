@@ -10,29 +10,50 @@ colors = [(0, 255, 0), (0, 100, 255)]
 detecting_blink = False
 
 n_frames_detect_blink = 0
-N_FRAMES_TO_CALC_EAR_THRESH = 60
+N_FRAMES_TO_CALC_EAR_THRESH = 5
 
 
 class Blinkathon:
     def __init__(self) -> None:
-        self.cap = None
         # self.trackers = cv2.legacy.MultiTracker_create()
         self.rects = None
         self.blink_detectors = [
             BlinkDetector(),
             BlinkDetector(),
         ]
-        self.status = None
+        self.playable = False
+        self.detecting_blink = False
+        self.n_frames_detect_blink = 0
 
-    def generate_frames(self):
-        global detecting_blink, n_frames_detect_blink
+    def start_detect_blink(self):
+        self.detecting_blink = True
+        return self
 
-        while True:
-            frame = camera_utils.read_video_capture(self.cap)
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            rects = detect_faces(gray)
+    def stop_detect_blink(self):
+        self.detecting_blink = False
+        self.blink_detectors = [
+            BlinkDetector(),
+            BlinkDetector(),
+        ]
+        self.n_frames_detect_blink = 0
+        return self
+
+    def get_status(self) -> dict:
+        return dict(
+            playable=self.playable,
+            detecting_blink=self.detecting_blink,
+            players=[
+                dict(blinkCount=self.blink_detectors[0].total_count),
+                dict(blinkCount=self.blink_detectors[1].total_count),
+            ],
+        )
+
+    def process_frame(self, frame: np.ndarray) -> np.ndarray:
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        rects = detect_faces(gray)
 
         ### Implement face tracking here.
+
         self.playable = len(rects) >= 1
 
         if self.detecting_blink:
@@ -53,7 +74,7 @@ class Blinkathon:
                 color,
                 2,
             )
-            
+
             if i < 2:
                 blink_detector = self.blink_detectors[i]
                 cv2.putText(
@@ -79,15 +100,12 @@ class Blinkathon:
                         eye_landmarks,
                         color,
                     )
-
                     ### Modify EAR calculation here.
                     if self.n_frames_detect_blink <= N_FRAMES_TO_CALC_EAR_THRESH:
                         if n_frames_detect_blink == N_FRAMES_TO_CALC_EAR_THRESH:
                             blink_detector.calculate_ear_thresh(eye_landmarks)
                         else:
-                            blink_detector.store_first_n_eye_landmarks(
-                                eye_landmarks
-                            )
+                            blink_detector.store_first_n_eye_landmarks(eye_landmarks)
                     else:
                         ear_score = blink_detector.detect_blink(eye_landmarks)
                         cv2.putText(
@@ -99,10 +117,8 @@ class Blinkathon:
                             color,
                             1,
                         )
+
         return self, frame
-    
-    
-    
 
     # def generate_frames(self):
     #     global detecting_blink, n_frames_detect_blink
