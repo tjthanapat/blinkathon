@@ -41,12 +41,7 @@ const car2 = document.getElementById('car-2');
 const roadWidth = document.getElementById('road').clientWidth;
 const carWidth = car1.clientWidth;
 
-let car1Pos = 0;
-let car2Pos = 0;
-let counter1 = 0; // counter for player 1
-let counter2 = 0; // counter for player 2
-let speed = 8;
-
+// Set goal here!!
 const limitBlink = 3
 
 const player1 = 'P1';
@@ -91,9 +86,9 @@ socket.on('blinkathon', (game) => {
 
 const moveCars = (blinkCount1, blinkCount2) => {
   const car1pos = Math.min(blinkCount1 / limitBlink, 1) *100
-  car1.style.left = `calc(${car1pos}% - ${carWidth}px)`
+  car1.style.left = `${car1pos}%`
   const car2pos = Math.min(blinkCount2 / limitBlink, 1) *100
-  car2.style.left = `calc(${car2pos}% - ${carWidth}px)`
+  car2.style.left = `${car2pos}%`
 }
 
 // function myFunction(pos1, pos2, end_or_not) {

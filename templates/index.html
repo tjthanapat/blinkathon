@@ -24,13 +24,17 @@
       }
     </style>
   </head>
-  <body>
-    
-    <header class="px-5 py-7 text-center text-white bg-slate-800 relative">
+  <body class="bg-green-700">
+    <header class="px-5 py-7 text-center bg-slate-700 text-white relative">
       <h1 class="text-4xl">Blinkathon</h1>
       <p class="text-sm">This is a super cool game.</p>
-      <p id="game-status" class="mt-5 animation-blinker">Press a button to start.</p>
-      <div id="blink-counters" class="flex justify-between absolute inset-0 w-full p-5 text-white">
+      <p id="game-status" class="mt-5 animation-blinker">
+        Press a button to start.
+      </p>
+      <div
+        id="blink-counters"
+        class="flex justify-between absolute inset-0 w-full p-5 text-white"
+      >
         <p>Player 1<br /><span id="player1-blink-count">0</span> counts</p>
         <p class="text-right">
           Player 2<br /><span id="player2-blink-count">0</span> counts
@@ -54,33 +58,39 @@
             />
           </div>
         </div>
+        <div
+          class="absolute h-full w-full inset-0 p-5 flex justify-center items-center"
+        >
+          <button
+            id="start-btn"
+            class="btn-primary text-black hover:text-gray-600 disabled:text-gray-400 text-lg animate-bounce hover:animate-none ease-in-out"
+            disabled="true"
+            onclick="startGame()"
+          >
+            - Start -
+          </button>
+        </div>
       </div>
-      
-      <button
-        id="start-btn"
-        class="btn-primary mt-2 text-black disabled:text-gray-400"
-        disabled="true"
-        onclick="startGame()"
-      >
-        Start
-      </button>
-      
-      <img id="server-live" class="pointer-events-none" />
     </div>
     <footer>
-      <p class="text-center text-sm px-5 py-2">
-        <a href="/about" class="btn-primary"
+      <p class="text-center text-sm px-5 py-10">
+        <a href="/about" class="text-white"
           >Blinkathon by Computer Vision Syndrome</a
         >
       </p>
     </footer>
 
-    <p>Live Camera on Client</p>
-    <video id="live-camera" autoplay></video>
-    <p>Realtime Frame Sent</p>
-    <canvas id="live-camera-preview"></canvas>
-    <p>Realtime Frame Recieved from Server</p>
+    <div class="absolute bottom-0 left-0 w-[280px] p-5">
+      <img id="server-live" class="pointer-events-none rounded-2xl" />
+    </div>
 
+    <video id="live-camera" autoplay style="display: none"></video>
+    <canvas id="live-camera-preview" style="display: none"></canvas>
     <script src="/static/js/script.js" type="text/javascript"></script>
+
+    <audio controls autoplay class="hidden">
+      <source src="/static/sound/background.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
   </body>
 </html>
