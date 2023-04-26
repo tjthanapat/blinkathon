@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Start Button with Countdown</title>
+</head>
+<body>
+    <button id="startButton" onclick="startCountdown()">Start Game</button>
+    <div id="countdown"></div>
+    
+    <script>
+        function startCountdown() {
+            let countdown = document.getElementById("countdown");
+            let counter = 3;
+            
+            let intervalId = setInterval(() => {
+                countdown.innerHTML = counter;
+                counter--;
+                
+                if (counter < 0) {
+                    clearInterval(intervalId);
+                    countdown.innerHTML = "";
+                    startGame();
+                }
+            }, 1000);
+        }
+        
+        function startGame() {
+            // Your game code goes here
+        }
+    </script>
+</body>
+</html>
