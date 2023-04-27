@@ -40,8 +40,7 @@ const startBtn = document.getElementById('start-btn');
 const gameStatus = document.getElementById('game-status');
 const car1 = document.getElementById('car-1');
 const car2 = document.getElementById('car-2');
-const roadWidth = document.getElementById('road').clientWidth;
-const carWidth = car1.clientWidth;
+
 
 const startGame = () => {
   console.log('start clicked');
